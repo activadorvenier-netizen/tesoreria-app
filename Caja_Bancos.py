@@ -65,6 +65,7 @@ with col1:
         """, unsafe_allow_html=True)
         if st.button(
             "📈 Ir",
+            key="btn_resultados",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
@@ -81,6 +82,7 @@ with col2:
         """, unsafe_allow_html=True)
         if st.button(
             "💰 Ir",
+            key="btn_cierre_caja",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
@@ -97,6 +99,7 @@ with col3:
         """, unsafe_allow_html=True)
         if st.button(
             "🏦 Ir",
+            key="btn_bancos",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
@@ -113,6 +116,7 @@ with col4:
         """, unsafe_allow_html=True)
         if st.button(
             "📈 Ir",
+            key="btn_plazos_fijos",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
@@ -129,6 +133,7 @@ with col5:
         """, unsafe_allow_html=True)
         if st.button(
             "📊 Ir",
+            key="btn_creditos",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
@@ -145,6 +150,7 @@ with col6:
         """, unsafe_allow_html=True)
         if st.button(
             "🍺 Ir",
+            key="btn_quilmes",  # ✅ Clave única
             use_container_width=True,
             type="secondary"
         ):
