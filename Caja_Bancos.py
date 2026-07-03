@@ -7,7 +7,7 @@ st.set_page_config(
 )
 
 # ============================================
-# SIDEBAR CON LOGO
+# SIDEBAR CON LOGO Y ENLACE A CHESSERP
 # ============================================
 
 with st.sidebar:
@@ -15,6 +15,33 @@ with st.sidebar:
         "assets/logo_grupo_venier.png",
         use_container_width=True
     )
+    
+    st.divider()
+    
+    # ✅ Enlace a ChessERP fijo en el sidebar
+    st.markdown("""
+    <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
+        <a href="https://venier.chesserp.com/AR173/#/dashboard" 
+           target="_blank" 
+           style="
+               display: inline-block;
+               background-color: #1f77b4;
+               color: white;
+               padding: 8px 16px;
+               text-decoration: none;
+               border-radius: 6px;
+               font-weight: 500;
+               font-size: 13px;
+               transition: all 0.3s;
+               width: 100%;
+               text-align: center;
+           "
+           onmouseover="this.style.backgroundColor='#145a8a'"
+           onmouseout="this.style.backgroundColor='#1f77b4'">
+           🔗 Ir a ChessERP
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.title("💰 Tesorería Grupo Venier")
 
@@ -65,7 +92,7 @@ with col1:
         """, unsafe_allow_html=True)
         if st.button(
             "📈 Ir",
-            key="btn_resultados",  # ✅ Clave única
+            key="btn_resultados",
             use_container_width=True,
             type="secondary"
         ):
@@ -82,7 +109,7 @@ with col2:
         """, unsafe_allow_html=True)
         if st.button(
             "💰 Ir",
-            key="btn_cierre_caja",  # ✅ Clave única
+            key="btn_cierre_caja",
             use_container_width=True,
             type="secondary"
         ):
@@ -99,7 +126,7 @@ with col3:
         """, unsafe_allow_html=True)
         if st.button(
             "🏦 Ir",
-            key="btn_bancos",  # ✅ Clave única
+            key="btn_bancos",
             use_container_width=True,
             type="secondary"
         ):
@@ -116,7 +143,7 @@ with col4:
         """, unsafe_allow_html=True)
         if st.button(
             "📈 Ir",
-            key="btn_plazos_fijos",  # ✅ Clave única
+            key="btn_plazos_fijos",
             use_container_width=True,
             type="secondary"
         ):
@@ -133,7 +160,7 @@ with col5:
         """, unsafe_allow_html=True)
         if st.button(
             "📊 Ir",
-            key="btn_creditos",  # ✅ Clave única
+            key="btn_creditos",
             use_container_width=True,
             type="secondary"
         ):
@@ -150,7 +177,7 @@ with col6:
         """, unsafe_allow_html=True)
         if st.button(
             "🍺 Ir",
-            key="btn_quilmes",  # ✅ Clave única
+            key="btn_quilmes",
             use_container_width=True,
             type="secondary"
         ):
