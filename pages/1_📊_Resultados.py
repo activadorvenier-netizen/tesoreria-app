@@ -14,7 +14,10 @@ from utils.resultados_ui import (
     mostrar_tarjeta_pf
 )
 
-mostrar_sidebar()
+from utils.menu import mostrar_menu
+
+# ✅ Mostrar el menú
+mostrar_menu()
 
 col1, col2 = st.columns([3,1])
 

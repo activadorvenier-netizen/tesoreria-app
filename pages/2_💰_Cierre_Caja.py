@@ -13,7 +13,10 @@ from utils.sheets import (
     obtener_todas_cajas
 )
 
-mostrar_sidebar()
+from utils.menu import mostrar_menu
+
+# ✅ Mostrar el menú
+mostrar_menu()
 
 st.title("💰 Cierre de Caja")
 

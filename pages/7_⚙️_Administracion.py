@@ -15,7 +15,10 @@ from utils.sheets import (
     eliminar_quilmes_antiguos
 )
 
-mostrar_sidebar()
+from utils.menu import mostrar_menu
+
+# ✅ Mostrar el menú
+mostrar_menu()
 
 st.title("⚙️ Administración")
 

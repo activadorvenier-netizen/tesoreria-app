@@ -19,7 +19,10 @@ def convertir_importe(valor):
         return 0
     return float(valor.replace(".", "").replace(",", "."))
 
-mostrar_sidebar()
+from utils.menu import mostrar_menu
+
+# ✅ Mostrar el menú
+mostrar_menu()
 
 st.title("📈 Plazos Fijos")
 

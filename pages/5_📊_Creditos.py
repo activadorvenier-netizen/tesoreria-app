@@ -13,7 +13,10 @@ from utils.sheets import (
     limpiar_cache
 )
 
-mostrar_sidebar()
+from utils.menu import mostrar_menu
+
+# ✅ Mostrar el menú
+mostrar_menu()
 
 st.title("📊 Créditos")
 
