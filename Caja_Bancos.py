@@ -45,14 +45,16 @@ with st.sidebar:
     
     st.divider()
     
-    # ✅ Menú lateral personalizado con "Resultados" coloreado
+    # ✅ Ocultar menú automático de Streamlit
     st.markdown("""
     <style>
-        /* Ocultar el menú automático de Streamlit */
         [data-testid="stSidebarNav"] {
             display: none !important;
         }
-        /* Estilo para los botones del menú */
+        [data-testid="stFooter"] {
+            display: none !important;
+        }
+        /* Estilos para los botones del menú */
         .menu-btn {
             display: block;
             width: 100%;
@@ -80,37 +82,30 @@ with st.sidebar:
         .menu-btn-destacado:hover {
             background-color: #1b5e20 !important;
         }
-        .menu-btn-destacado a {
-            color: white !important;
-        }
-        .menu-btn a {
-            text-decoration: none;
-            color: #262730;
-            display: block;
-            width: 100%;
-        }
-        .menu-btn-destacado a {
-            color: white !important;
-        }
     </style>
     """, unsafe_allow_html=True)
     
-    # Resultados - DESTACADO EN VERDE
-    st.markdown("""
-    <div class="menu-btn menu-btn-destacado">
-        <a href="/pages/1_📊_Resultados">📊 Resultados</a>
-    </div>
-    """, unsafe_allow_html=True)
+    # ✅ Menú con botones - RESULTADOS en VERDE
+    if st.button("📊 Resultados", key="menu_resultados", use_container_width=True, type="primary"):
+        st.switch_page("pages/1_📊_Resultados.py")
     
-    # El resto del menú
-    st.markdown("""
-    <div class="menu-btn"><a href="/pages/3_🏦_Bancos">🏦 Bancos</a></div>
-    <div class="menu-btn"><a href="/pages/4_🍺_Quilmes">🍺 Quilmes</a></div>
-    <div class="menu-btn"><a href="/pages/5_💰_Cierre_Caja">💰 Cierre de Caja</a></div>
-    <div class="menu-btn"><a href="/pages/6_📈_Plazos_Fijos">📈 Plazos Fijos</a></div>
-    <div class="menu-btn"><a href="/pages/8_📊_Creditos">📊 Créditos</a></div>
-    <div class="menu-btn"><a href="/pages/7_⚙️_Administracion">⚙️ Administración</a></div>
-    """, unsafe_allow_html=True)
+    if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
+        st.switch_page("pages/3_🏦_Bancos.py")
+    
+    if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
+        st.switch_page("pages/4_🍺_Quilmes.py")
+    
+    if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
+        st.switch_page("pages/5_💰_Cierre_Caja.py")
+    
+    if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
+        st.switch_page("pages/6_📈_Plazos_Fijos.py")
+    
+    if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
+        st.switch_page("pages/8_📊_Creditos.py")
+    
+    if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
+        st.switch_page("pages/7_⚙️_Administracion.py")
     
     st.divider()
     
