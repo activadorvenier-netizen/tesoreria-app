@@ -1,5 +1,20 @@
 import streamlit as st
 
+# ✅ Forzar limpieza de caché del navegador
+st.set_page_config(
+    page_title="Tesorería",
+    page_icon="💰",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ✅ Agregar meta tag para forzar recarga
+st.markdown("""
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+""", unsafe_allow_html=True)
+
 st.set_page_config(
     page_title="Tesorería",
     page_icon="💰",
