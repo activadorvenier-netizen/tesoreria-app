@@ -18,33 +18,6 @@ with st.sidebar:
     
     st.divider()
     
-    # Enlace a ChessERP
-    st.markdown("""
-    <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
-        <a href="https://venier.chesserp.com/AR173/#/dashboard" 
-           target="_blank" 
-           style="
-               display: inline-block;
-               background-color: #1f77b4;
-               color: white;
-               padding: 8px 16px;
-               text-decoration: none;
-               border-radius: 6px;
-               font-weight: 500;
-               font-size: 13px;
-               transition: all 0.3s;
-               width: 100%;
-               text-align: center;
-           "
-           onmouseover="this.style.backgroundColor='#145a8a'"
-           onmouseout="this.style.backgroundColor='#1f77b4'">
-           🔗 Ir a ChessERP
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.divider()
-    
     # ✅ Ocultar menú automático de Streamlit
     st.markdown("""
     <style>
@@ -106,6 +79,31 @@ with st.sidebar:
     
     if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
         st.switch_page("pages/7_⚙️_Administracion.py")
+
+    # Enlace a ChessERP
+    st.markdown("""
+    <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
+        <a href="https://venier.chesserp.com/AR173/#/dashboard" 
+           target="_blank" 
+           style="
+               display: inline-block;
+               background-color: #1f77b4;
+               color: white;
+               padding: 8px 16px;
+               text-decoration: none;
+               border-radius: 6px;
+               font-weight: 500;
+               font-size: 13px;
+               transition: all 0.3s;
+               width: 100%;
+               text-align: center;
+           "
+           onmouseover="this.style.backgroundColor='#145a8a'"
+           onmouseout="this.style.backgroundColor='#1f77b4'">
+           🔗 Ir a ChessERP
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.divider()
     
