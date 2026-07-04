@@ -3,13 +3,18 @@ import pandas as pd
 
 from datetime import date, datetime
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     obtener_dataframe,
     actualizar_quilmes,
     eliminar_quilmes
 )
+
+st.title("🍺 Quilmes")
+
+# ============================================
+# FUNCIONES
+# ============================================
 
 def convertir_importe(valor):
     """
@@ -26,17 +31,6 @@ def convertir_importe(valor):
         return 0
 
     return float(valor.replace(".", "").replace(",", "."))
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
-
-st.title("🍺 Quilmes")
-
-# ============================================
-# FUNCIONES
-# ============================================
 
 def formato_moneda(valor):
     return f"$ {float(valor):,.0f}".replace(",", ".")

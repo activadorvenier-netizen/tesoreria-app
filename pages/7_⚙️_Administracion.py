@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     obtener_dataframe,
@@ -14,11 +13,6 @@ from utils.sheets import (
     eliminar_bancos_antiguos,
     eliminar_quilmes_antiguos
 )
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
 
 st.title("⚙️ Administración")
 

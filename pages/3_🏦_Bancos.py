@@ -3,13 +3,18 @@ import pandas as pd
 
 from datetime import date, datetime
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     obtener_dataframe,
     actualizar_banco,
     eliminar_banco
 )
+
+st.title("🏦 Bancos")
+
+# ============================================
+# FUNCIONES
+# ============================================
 
 def convertir_importe(valor):
     """
@@ -26,17 +31,6 @@ def convertir_importe(valor):
         return 0
 
     return float(valor.replace(".", "").replace(",", "."))
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
-
-st.title("🏦 Bancos")
-
-# ============================================
-# FUNCIONES
-# ============================================
 
 def formato_moneda(valor):
     return f"$ {float(valor):,.0f}".replace(",", ".")
@@ -61,26 +55,15 @@ if "mensaje_bancos" in st.session_state:
 # ============================================
 
 hoja_bancos = obtener_hoja("Bancos")
-hoja_pf = obtener_hoja("PlazosFijos")
 
 # ============================================
-# EMPRESAS Y BANCOS PF (DEFINIDOS ANTES DE LOS TABS)
+# EMPRESAS
 # ============================================
 
 empresas = [
     "Venier",
     "Venbiere",
     "CV Trade"
-]
-
-bancos_pf = [
-    "Galicia",
-    "Macro",
-    "Credicoop",
-    "Santander Rio",
-    "Provincia",
-    "BBVA",
-    "ICBC"
 ]
 
 # ============================================

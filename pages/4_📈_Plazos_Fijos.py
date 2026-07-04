@@ -3,13 +3,18 @@ import pandas as pd
 
 from datetime import date, datetime
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     obtener_dataframe,
     actualizar_plazo_fijo,
     eliminar_plazo_fijo
 )
+
+st.title("📈 Plazos Fijos")
+
+# ============================================
+# FUNCIONES
+# ============================================
 
 def convertir_importe(valor):
     if valor is None:
@@ -18,13 +23,6 @@ def convertir_importe(valor):
     if valor == "":
         return 0
     return float(valor.replace(".", "").replace(",", "."))
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
-
-st.title("📈 Plazos Fijos")
 
 def formato_moneda(valor):
     return f"$ {float(valor):,.0f}".replace(",", ".")

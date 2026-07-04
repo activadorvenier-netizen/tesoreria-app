@@ -1,23 +1,12 @@
 import streamlit as st
-from utils.layout import mostrar_sidebar
-from utils.sheets import (
-    obtener_hoja,
-    leer_hoja
-)
-
 import pandas as pd
-
 from datetime import datetime, date
+from utils.sheets import leer_hoja
+from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
 
-from utils.resultados_ui import (
-    mostrar_tarjeta_bancos,
-    mostrar_tarjeta_pf
-)
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
+# ============================================
+# ENCABEZADO
+# ============================================
 
 col1, col2 = st.columns([3,1])
 
@@ -25,12 +14,12 @@ with col1:
     st.title("📊 Resultados")
 
 with col2:
-    st.caption(
-        "Actualizado"
-    )
-    st.write(
-        datetime.now().strftime("%d/%m/%Y %H:%M")
-    )
+    st.caption("Actualizado")
+    st.write(datetime.now().strftime("%d/%m/%Y %H:%M"))
+
+# ============================================
+# ESTILOS
+# ============================================
 
 st.markdown("""
 <style>
@@ -38,7 +27,6 @@ st.markdown("""
 [data-testid="stMetricValue"] {
     font-size: 1.4rem !important;
 }
-
 /* Título del metric */
 [data-testid="stMetricLabel"] {
     font-size: 0.9rem !important;
@@ -46,38 +34,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
+# ============================================
 # FECHA DE CONSULTA
-# =========================
+# ============================================
 
 col_fecha, _ = st.columns([1,3])
 
 with col_fecha:
+    fecha_consulta = st.date_input("📅 Fecha", value=date.today())
 
-    fecha_consulta = st.date_input(
-        "📅 Fecha",
-        value=date.today()
-    )
-
-# =========================
+# ============================================
 # FUNCIONES
-# =========================
+# ============================================
 
 def formato_moneda(valor):
-
     return f"$ {valor:,.0f}".replace(",", ".")
 
 def limpiar_numero_local(valor):
-    """
-    Limpia un valor para convertirlo a float.
-    Maneja strings con $, comas, puntos, etc.
-    """
     if valor is None:
         return 0.0
-    
     if isinstance(valor, (int, float)):
         return float(valor)
-    
     if isinstance(valor, str):
         valor = valor.replace("$", "").strip()
         if valor == "":
@@ -87,23 +64,15 @@ def limpiar_numero_local(valor):
             return float(valor)
         except:
             return 0.0
-    
     return 0.0
 
-def calcular_saldos_empresa(
-    empresa,
-    fecha_consulta,
-    caja
-):
-
+def calcular_saldos_empresa(empresa, fecha_consulta, caja):
     caja_emp = caja[
-        (caja["Empresa"] == empresa)
-        &
+        (caja["Empresa"] == empresa) &
         (caja["Fecha"] <= fecha_consulta)
     ].copy()
 
     if caja_emp.empty:
-
         return {
             "efectivo": 0,
             "cheques": 0,
@@ -112,11 +81,7 @@ def calcular_saldos_empresa(
             "fecha_caja": None
         }
 
-    caja_emp = caja_emp.sort_values(
-        "Fecha",
-        ascending=False
-    )
-
+    caja_emp = caja_emp.sort_values("Fecha", ascending=False)
     ultimo = caja_emp.iloc[0]
 
     efectivo = float(ultimo["Efectivo"])
@@ -131,16 +96,9 @@ def calcular_saldos_empresa(
         "fecha_caja": ultimo["Fecha"]
     }
 
-def calcular_bancos_empresa(
-    empresa,
-    fecha_consulta,
-    bancos,
-    plazos_fijos
-):
-
+def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     bancos_emp = bancos[
-        (bancos["Empresa"] == empresa)
-        &
+        (bancos["Empresa"] == empresa) &
         (bancos["Fecha"] <= fecha_consulta)
     ].copy()
 
@@ -150,530 +108,242 @@ def calcular_bancos_empresa(
     santander = 0
 
     if not bancos_emp.empty:
-
-        bancos_emp = bancos_emp.sort_values(
-            "Fecha",
-            ascending=False
-        )
-
+        bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
         ultimo = bancos_emp.iloc[0]
 
-        galicia = (
-            float(ultimo["GaliciaSaldo"])
-            +
-            float(ultimo["GaliciaFCI"])
-        )
-
-        macro = (
-            float(ultimo["MacroSaldo"])
-            +
-            float(ultimo["MacroFCI"])
-        )
-
-        credicoop = (
-            float(ultimo["CredicoopSaldo"])
-            +
-            float(ultimo["CredicoopFCI"])
-        )
-
-        santander = (
-            float(ultimo["SantanderSaldo"])
-            +
-            float(ultimo["SantanderFCI"])
-        )
+        galicia = float(ultimo["GaliciaSaldo"]) + float(ultimo["GaliciaFCI"])
+        macro = float(ultimo["MacroSaldo"]) + float(ultimo["MacroFCI"])
+        credicoop = float(ultimo["CredicoopSaldo"]) + float(ultimo["CredicoopFCI"])
+        santander = float(ultimo["SantanderSaldo"]) + float(ultimo["SantanderFCI"])
 
     detalle_pf = pd.DataFrame()
-
     pf_galicia = 0
     pf_macro = 0
     pf_credicoop = 0
     pf_santander = 0
 
     if not plazos_fijos.empty:
-
-        detalle_pf = plazos_fijos[
-            plazos_fijos["Empresa"] == empresa
-        ].copy()
-
+        detalle_pf = plazos_fijos[plazos_fijos["Empresa"] == empresa].copy()
         if not detalle_pf.empty:
+            detalle_pf["Capital"] = detalle_pf["Capital"].astype(float)
+            pf_galicia = detalle_pf.loc[detalle_pf["Banco"] == "Galicia", "Capital"].sum()
+            pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
+            pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
+            pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
 
-            detalle_pf["Capital"] = (
-                detalle_pf["Capital"]
-                .astype(float)
-            )
-
-            pf_galicia = detalle_pf.loc[
-                detalle_pf["Banco"] == "Galicia",
-                "Capital"
-            ].sum()
-
-            pf_macro = detalle_pf.loc[
-                detalle_pf["Banco"] == "Macro",
-                "Capital"
-            ].sum()
-
-            pf_credicoop = detalle_pf.loc[
-                detalle_pf["Banco"] == "Credicoop",
-                "Capital"
-            ].sum()
-
-            pf_santander = detalle_pf.loc[
-                detalle_pf["Banco"] == "Santander",
-                "Capital"
-            ].sum()
-
-    total_bancos = (
-        galicia
-        +
-        macro
-        +
-        credicoop
-        +
-        santander
-    )
-
-    total_pf = (
-        pf_galicia
-        +
-        pf_macro
-        +
-        pf_credicoop
-        +
-        pf_santander
-    )
+    total_bancos = galicia + macro + credicoop + santander
+    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander
 
     return {
-
         "galicia": galicia,
         "macro": macro,
         "credicoop": credicoop,
         "santander": santander,
-
         "pf_galicia": pf_galicia,
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
-
         "total_bancos": total_bancos,
         "total_pf": total_pf,
-
         "detalle_pf": detalle_pf
     }
 
-def calcular_quilmes_empresa(
-            empresa,
-            fecha_consulta,
-            quilmes
-        ):
+def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
+    if quilmes.empty:
+        return {"deuda": 0, "nc": 0, "cobertura": 0, "necesidad": 0}
 
-            if quilmes.empty:
+    datos = quilmes[
+        (quilmes["Empresa"] == empresa) &
+        (quilmes["Fecha"] <= fecha_consulta)
+    ].copy()
 
-                return {
-                    "deuda": 0,
-                    "nc": 0,
-                    "cobertura": 0,
-                    "necesidad": 0
-                }
+    if datos.empty:
+        return {"deuda": 0, "nc": 0, "cobertura": 0, "necesidad": 0}
 
-            datos = quilmes[
-                (quilmes["Empresa"] == empresa)
-                &
-                (quilmes["Fecha"] <= fecha_consulta)
-            ].copy()
+    datos = datos.sort_values("Fecha", ascending=False)
+    ultimo = datos.iloc[0]
 
-            if datos.empty:
+    deuda = float(ultimo["DeudaPagar"])
+    nc = float(ultimo["PromesaNC"])
+    cobertura = (
+        float(ultimo["PromesaNC"]) +
+        float(ultimo["ChequesEmitidos"]) +
+        float(ultimo["Depositos"]) +
+        float(ultimo["Efectivo"])
+    )
+    necesidad = float(ultimo["NecesidadQuilmes"])
 
-                return {
-                    "deuda": 0,
-                    "nc": 0,
-                    "cobertura": 0,
-                    "necesidad": 0
-                }
+    return {"deuda": deuda, "nc": nc, "cobertura": cobertura, "necesidad": necesidad}
 
-            datos = datos.sort_values(
-                "Fecha",
-                ascending=False
-            )
-
-            ultimo = datos.iloc[0]
-
-            deuda = float(
-                ultimo["DeudaPagar"]
-            )
-
-            nc = float(
-                ultimo["PromesaNC"]
-            )
-
-            cobertura = (
-                float(
-                    ultimo["PromesaNC"]
-                )
-                +
-                float(
-                    ultimo["ChequesEmitidos"]
-                )
-                +
-                float(
-                    ultimo["Depositos"]
-                )
-                +
-                float(
-                    ultimo["Efectivo"]
-                )
-            )
-
-            necesidad = float(
-                ultimo["NecesidadQuilmes"]
-            )
-
-            return {
-                "deuda": deuda,
-                "nc": nc,
-                "cobertura": cobertura,
-                "necesidad": necesidad
-            }
-
-# =========================
+# ============================================
 # CARGA DE DATOS
-# =========================
+# ============================================
 
 caja = leer_hoja("CierreCaja")
 bancos_df = leer_hoja("Bancos")
 plazos_fijos_df = leer_hoja("PlazosFijos")
 quilmes = leer_hoja("Quilmes")
 
-# =========================
+# ============================================
 # VALIDACIÓN DE DATAFRAMES VACÍOS
-# =========================
+# ============================================
 
-# Si caja está vacío, crear DataFrame con las columnas correctas
 if caja.empty:
-    caja = pd.DataFrame(columns=[
-        "ID",
-        "Fecha",
-        "Empresa",
-        "Efectivo",
-        "Cheques",
-        "Echeq"
-    ])
+    caja = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Efectivo", "Cheques", "Echeq"])
 
-# Si bancos_df está vacío, crear DataFrame con las columnas correctas
 if bancos_df.empty:
     bancos_df = pd.DataFrame(columns=[
-        "ID",
-        "Fecha",
-        "Empresa",
-        "GaliciaSaldo",
-        "GaliciaFCI",
-        "MacroSaldo",
-        "MacroFCI",
-        "CredicoopSaldo",
-        "CredicoopFCI",
-        "SantanderSaldo",
-        "SantanderFCI"
+        "ID", "Fecha", "Empresa", "GaliciaSaldo", "GaliciaFCI",
+        "MacroSaldo", "MacroFCI", "CredicoopSaldo", "CredicoopFCI",
+        "SantanderSaldo", "SantanderFCI"
     ])
 
-# Si plazos_fijos_df está vacío, crear DataFrame con las columnas correctas
 if plazos_fijos_df.empty:
-    plazos_fijos_df = pd.DataFrame(columns=[
-        "ID",
-        "Fecha",
-        "Empresa",
-        "Banco",
-        "Capital",
-        "Tasa",
-        "Vencimiento"
-    ])
+    plazos_fijos_df = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Banco", "Capital", "Tasa", "Vencimiento"])
 
-# Si quilmes está vacío, crear DataFrame con las columnas correctas
 if quilmes.empty:
     quilmes = pd.DataFrame(columns=[
-        "ID",
-        "Fecha",
-        "Empresa",
-        "DeudaPagar",
-        "PromesaNC",
-        "ChequesEmitidos",
-        "Depositos",
-        "Efectivo",
-        "NecesidadQuilmes"
+        "ID", "Fecha", "Empresa", "DeudaPagar", "PromesaNC",
+        "ChequesEmitidos", "Depositos", "Efectivo", "NecesidadQuilmes"
     ])
 
-# =========================
+# ============================================
 # VALIDACIONES
-# =========================
+# ============================================
 
 if caja.empty:
+    st.warning("No existe ningún Cierre de Caja cargado.")
 
-    st.warning(
-        "No existe ningún Cierre de Caja cargado."
-    )
-
-# =========================
+# ============================================
 # FECHAS
-# =========================
+# ============================================
 
-caja["Fecha"] = pd.to_datetime(
-    caja["Fecha"]
-).dt.date
+caja["Fecha"] = pd.to_datetime(caja["Fecha"]).dt.date
 
 if not bancos_df.empty:
-
-    bancos_df["Fecha"] = pd.to_datetime(
-        bancos_df["Fecha"]
-    ).dt.date
+    bancos_df["Fecha"] = pd.to_datetime(bancos_df["Fecha"]).dt.date
 
 if not quilmes.empty:
+    quilmes["Fecha"] = pd.to_datetime(quilmes["Fecha"]).dt.date
 
-    quilmes["Fecha"] = pd.to_datetime(
-        quilmes["Fecha"]
-    ).dt.date    
-
-# =========================
+# ============================================
 # EMPRESAS
-# =========================
+# ============================================
 
-empresas = [
-    "Venier",
-    "Venbiere",
-    "CV Trade"
-]
-
+empresas = ["Venier", "Venbiere", "CV Trade"]
 if "Venier" in empresas:
-
     empresas.remove("Venier")
+    empresas.insert(0, "Venier")
 
-    empresas.insert(
-        0,
-        "Venier"
-    )
-
-# =========================
+# ============================================
 # RESUMEN GENERAL
-# =========================
+# ============================================
 
 total_caja = 0
 total_bancos = 0
 total_necesidad = 0
-total_pf = 0
 
 for empresa in empresas:
-
-    saldos = calcular_saldos_empresa(
-        empresa,
-        fecha_consulta,
-        caja
-    )
-
-    bancos_empresa = calcular_bancos_empresa(
-        empresa,
-        fecha_consulta,
-        bancos_df,
-        plazos_fijos_df
-    )
-
-    quilmes_empresa = calcular_quilmes_empresa(
-        empresa,
-        fecha_consulta,
-        quilmes
-    )
+    saldos = calcular_saldos_empresa(empresa, fecha_consulta, caja)
+    bancos_empresa = calcular_bancos_empresa(empresa, fecha_consulta, bancos_df, plazos_fijos_df)
+    quilmes_empresa = calcular_quilmes_empresa(empresa, fecha_consulta, quilmes)
 
     total_caja += saldos["total"]
-
-    # Sólo dinero disponible (Cuenta + FCI)
     total_bancos += bancos_empresa["total_bancos"]
-
     total_necesidad += quilmes_empresa["necesidad"]
 
-patrimonio_total = (
-    total_caja
-    + total_bancos
-)
+patrimonio_total = total_caja + total_bancos
 
 st.subheader("📊 Resumen Ejecutivo")
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 with kpi1:
-
-    st.metric(
-        "💵 Caja Total",
-        formato_moneda(total_caja)
-    )
+    st.metric("💵 Caja Total", formato_moneda(total_caja))
 
 with kpi2:
-
-    st.metric(
-        "🏦 Bancos",
-        formato_moneda(total_bancos)
-    )
+    st.metric("🏦 Bancos", formato_moneda(total_bancos))
 
 with kpi3:
-
-    st.metric(
-        "💎 Patrimonio",
-        formato_moneda(patrimonio_total)
-    )
+    st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
 
 with kpi4:
+    st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
 
-    st.metric(
-        "🍺 Necesidad Quilmes",
-        formato_moneda(total_necesidad)
-    )
-
-# =========================
-# RESULTADOS
-# =========================
+# ============================================
+# RESULTADOS POR EMPRESA (TABS)
+# ============================================
 
 st.markdown("""
 <style>
-
 .stTabs [data-baseweb="tab-list"]{
     gap:10px;
 }
-
 .stTabs [data-baseweb="tab"]{
-
     height:52px;
-
     padding-left:25px;
     padding-right:25px;
-
     border-radius:12px 12px 0 0;
-
     background:#F5F6F8;
-
     border:1px solid #D9D9D9;
-
     font-weight:600;
-
 }
-
 .stTabs [aria-selected="true"]{
-
     background:#D32F2F !important;
-
     color:white !important;
-
     border:none;
-
 }
-
 </style>
 """, unsafe_allow_html=True)
 
-tabs = st.tabs([
-    "🏢 Venier",
-    "🍺 Venbiere",
-    "📦 CV Trade"
-])
+tabs = st.tabs(["🏢 Venier", "🍺 Venbiere", "📦 CV Trade"])
 
 for tab, empresa in zip(tabs, empresas):
-
     with tab:
-
-        saldos = calcular_saldos_empresa(
-            empresa,
-            fecha_consulta,
-            caja
-        )
-
-        bancos_empresa = calcular_bancos_empresa(
-            empresa,
-            fecha_consulta,
-            bancos_df,
-            plazos_fijos_df
-        )
-
-        quilmes_empresa = calcular_quilmes_empresa(
-            empresa,
-            fecha_consulta,
-            quilmes
-        )
+        saldos = calcular_saldos_empresa(empresa, fecha_consulta, caja)
+        bancos_empresa = calcular_bancos_empresa(empresa, fecha_consulta, bancos_df, plazos_fijos_df)
+        quilmes_empresa = calcular_quilmes_empresa(empresa, fecha_consulta, quilmes)
 
         with st.container(border=True):
-
-            st.subheader(
-                f"🏢 {empresa.upper()}"
-            )
+            st.subheader(f"🏢 {empresa.upper()}")
 
             if saldos["fecha_caja"] is not None:
-
-                st.caption(
-                    f"Cierre de Caja utilizado: {saldos['fecha_caja'].strftime('%d/%m/%Y')}"
-                )
+                st.caption(f"Cierre de Caja utilizado: {saldos['fecha_caja'].strftime('%d/%m/%Y')}")
 
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
-                st.metric(
-                    "💵 Efectivo",
-                    formato_moneda(
-                        saldos["efectivo"]
-                    )
-                )
-
+                st.metric("💵 Efectivo", formato_moneda(saldos["efectivo"]))
             with col2:
-                st.metric(
-                    "📄 Cheques",
-                    formato_moneda(
-                        saldos["cheques"]
-                    )
-                )
-
+                st.metric("📄 Cheques", formato_moneda(saldos["cheques"]))
             with col3:
-                st.metric(
-                    "🏦 Echeq",
-                    formato_moneda(
-                        saldos["echeq"]
-                    )
-                )
-
+                st.metric("🏦 Echeq", formato_moneda(saldos["echeq"]))
             with col4:
-                st.metric(
-                    "💰 Total",
-                    formato_moneda(
-                        saldos["total"]
-                    )
-                )
+                st.metric("💰 Total", formato_moneda(saldos["total"]))
 
             st.divider()
 
-            mostrar_tarjeta_bancos(
-                empresa,
-                bancos_empresa
-            )
+            mostrar_tarjeta_bancos(empresa, bancos_empresa)
+            mostrar_tarjeta_pf(bancos_empresa["detalle_pf"])
 
-            mostrar_tarjeta_pf(
-                bancos_empresa["detalle_pf"]
-            )
-
-            # =========================
+            # ============================================
             # RESUMEN DE CRÉDITOS - CUOTAS DEL MES
-            # =========================
+            # ============================================
             
             st.divider()
             st.subheader("📊 Resumen de Créditos - Cuotas del Mes")
             
-            # Obtener datos de créditos
             df_creditos_all = leer_hoja("Creditos")
             df_amort_all = leer_hoja("Amortizacion")
             
             if not df_creditos_all.empty and not df_amort_all.empty:
-                
-                # Obtener el mes seleccionado
                 mes_seleccionado = fecha_consulta.strftime("%Y-%m")
-                
-                # Crear lista de cuotas del mes para la empresa actual
                 cuotas_mes = []
                 
                 for _, credito in df_creditos_all.iterrows():
                     if credito["Empresa"] == empresa:
                         df_amort_cred = df_amort_all[df_amort_all["ID Credito"] == credito["ID"]]
                         if not df_amort_cred.empty:
-                            # Buscar cuotas del mes seleccionado
                             for _, cuota in df_amort_cred.iterrows():
                                 fecha_cuota = pd.to_datetime(cuota["Fecha"]).strftime("%Y-%m")
                                 if fecha_cuota == mes_seleccionado:
@@ -687,23 +357,18 @@ for tab, empresa in zip(tabs, empresas):
                 
                 if cuotas_mes:
                     df_cuotas = pd.DataFrame(cuotas_mes)
-                    
                     total_mes = df_cuotas["Monto"].sum()
                     pagadas = df_cuotas[df_cuotas["Pagada"] == "✅ Pagada"]
                     pendientes = df_cuotas[df_cuotas["Pagada"] == "⏳ Pendiente"]
                     
                     col1, col2, col3 = st.columns(3)
-                    
                     with col1:
                         st.metric("💰 Total Cuotas Mes", formato_moneda(total_mes))
-                    
                     with col2:
                         st.metric("✅ Pagadas", len(pagadas))
-                    
                     with col3:
                         st.metric("⏳ Pendientes", len(pendientes))
                     
-                    # Mostrar detalle de cuotas
                     st.dataframe(
                         df_cuotas[["Fecha", "Banco", "Monto", "Pagada"]],
                         use_container_width=True,
@@ -720,63 +385,25 @@ for tab, empresa in zip(tabs, empresas):
             else:
                 st.info("📭 No hay créditos o cuotas registradas aún.")
 
-            patrimonio_total = (
-                saldos["total"]
-                + bancos_empresa["total_bancos"]
-            )
+        # ============================================
+        # QUILMES
+        # ============================================
 
         with st.container(border=True):
+            st.markdown("### 🍺 Quilmes")
             
-            st.markdown(
-                "### 🍺 Quilmes"
-            )
-
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
-
-                st.metric(
-                    "Deuda",
-                    formato_moneda(
-                        quilmes_empresa["deuda"]
-                    )
-                )
-
+                st.metric("Deuda", formato_moneda(quilmes_empresa["deuda"]))
             with col2:
-
-                st.metric(
-                    "Promesa NC",
-                    formato_moneda(
-                        quilmes_empresa["nc"]
-                    )
-                )
-
+                st.metric("Promesa NC", formato_moneda(quilmes_empresa["nc"]))
             with col3:
-
-                st.metric(
-                    "Cobertura",
-                    formato_moneda(
-                        quilmes_empresa["cobertura"]
-                    )
-                )
-
+                st.metric("Cobertura", formato_moneda(quilmes_empresa["cobertura"]))
             with col4:
-
-                st.metric(
-                    "Necesidad",
-                    formato_moneda(
-                        quilmes_empresa["necesidad"]
-                    )
-                )
+                st.metric("Necesidad", formato_moneda(quilmes_empresa["necesidad"]))
 
             if quilmes_empresa["necesidad"] > 0:
-
-                st.error(
-                    f"🔴 Necesidad Quilmes: {formato_moneda(quilmes_empresa['necesidad'])}"
-                )
-
+                st.error(f"🔴 Necesidad Quilmes: {formato_moneda(quilmes_empresa['necesidad'])}")
             else:
-
-                st.success(
-                    f"🟢 Cubierto por {formato_moneda(abs(quilmes_empresa['necesidad']))}"
-                )
+                st.success(f"🟢 Cubierto por {formato_moneda(abs(quilmes_empresa['necesidad']))}")

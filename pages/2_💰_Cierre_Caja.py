@@ -3,7 +3,6 @@ import pandas as pd
 
 from datetime import date, datetime
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     leer_hoja,
@@ -12,11 +11,6 @@ from utils.sheets import (
     eliminar_cierre_caja,
     obtener_todas_cajas
 )
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
 
 st.title("💰 Cierre de Caja")
 

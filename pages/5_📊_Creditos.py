@@ -5,18 +5,12 @@ import time
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
-from utils.layout import mostrar_sidebar
 from utils.sheets import (
     obtener_hoja,
     leer_hoja,
     obtener_dataframe,
     limpiar_cache
 )
-
-from utils.menu import mostrar_menu
-
-# ✅ Mostrar el menú
-mostrar_menu()
 
 st.title("📊 Créditos")
 
