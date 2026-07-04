@@ -19,10 +19,6 @@ def convertir_importe(valor):
         return 0
     return float(valor.replace(".", "").replace(",", "."))
 
-from utils.config import configurar_pagina
-from utils.layout import mostrar_sidebar
-
-configurar_pagina()
 mostrar_sidebar()
 
 st.title("📈 Plazos Fijos")

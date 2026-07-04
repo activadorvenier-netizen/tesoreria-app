@@ -1,20 +1,5 @@
 import streamlit as st
 
-# ✅ Forzar limpieza de caché del navegador
-st.set_page_config(
-    page_title="Tesorería",
-    page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ✅ Agregar meta tag para forzar recarga
-st.markdown("""
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-""", unsafe_allow_html=True)
-
 st.set_page_config(
     page_title="Tesorería",
     page_icon="💰",
@@ -22,7 +7,7 @@ st.set_page_config(
 )
 
 # ============================================
-# SIDEBAR CON LOGO Y ENLACE A CHESSERP
+# SIDEBAR CON LOGO, ENLACE A CHESSERP Y MENÚ
 # ============================================
 
 with st.sidebar:
@@ -33,7 +18,7 @@ with st.sidebar:
     
     st.divider()
     
-    # ✅ Enlace a ChessERP fijo en el sidebar
+    # Enlace a ChessERP
     st.markdown("""
     <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
         <a href="https://venier.chesserp.com/AR173/#/dashboard" 
@@ -57,6 +42,83 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ✅ Menú lateral personalizado con "Resultados" coloreado
+    st.markdown("""
+    <style>
+        /* Ocultar el menú automático de Streamlit */
+        [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        /* Estilo para los botones del menú */
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            margin: 4px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            text-decoration: none;
+            color: #262730;
+            background-color: transparent;
+            transition: all 0.2s ease;
+        }
+        .menu-btn:hover {
+            background-color: #f0f0f0;
+        }
+        .menu-btn-destacado {
+            background-color: #2e7d32 !important;
+            color: white !important;
+            font-weight: 600;
+        }
+        .menu-btn-destacado:hover {
+            background-color: #1b5e20 !important;
+        }
+        .menu-btn-destacado a {
+            color: white !important;
+        }
+        .menu-btn a {
+            text-decoration: none;
+            color: #262730;
+            display: block;
+            width: 100%;
+        }
+        .menu-btn-destacado a {
+            color: white !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Resultados - DESTACADO EN VERDE
+    st.markdown("""
+    <div class="menu-btn menu-btn-destacado">
+        <a href="/pages/1_📊_Resultados">📊 Resultados</a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # El resto del menú
+    st.markdown("""
+    <div class="menu-btn"><a href="/pages/3_🏦_Bancos">🏦 Bancos</a></div>
+    <div class="menu-btn"><a href="/pages/4_🍺_Quilmes">🍺 Quilmes</a></div>
+    <div class="menu-btn"><a href="/pages/5_💰_Cierre_Caja">💰 Cierre de Caja</a></div>
+    <div class="menu-btn"><a href="/pages/6_📈_Plazos_Fijos">📈 Plazos Fijos</a></div>
+    <div class="menu-btn"><a href="/pages/8_📊_Creditos">📊 Créditos</a></div>
+    <div class="menu-btn"><a href="/pages/7_⚙️_Administracion">⚙️ Administración</a></div>
+    """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    st.caption("By Pato Frangi")
+
+# ============================================
+# CONTENIDO PRINCIPAL
+# ============================================
 
 st.title("💰 Tesorería Grupo Venier")
 
