@@ -38,57 +38,46 @@ def mostrar_sidebar():
 
         st.markdown("---")
 
-        # ✅ CSS para el menú con RESULTADOS en VERDE
+        # ✅ Versión alternativa con botones de Streamlit
         st.markdown("""
         <style>
-            /* Menú personalizado */
-            .custom-menu {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-            .custom-menu li {
-                padding: 10px 14px;
-                margin: 4px 0;
-                border-radius: 8px;
-                font-size: 15px;
-                font-weight: 500;
-                transition: all 0.2s ease;
-                cursor: pointer;
-            }
-            .custom-menu li a {
-                text-decoration: none;
-                color: #262730;
-                display: block;
-                width: 100%;
-            }
-            .custom-menu li:hover {
-                background-color: #f0f0f0;
-            }
-            .custom-menu .destacado {
+            .btn-resultados {
                 background-color: #2e7d32 !important;
                 color: white !important;
-                font-weight: 600;
-                border-left: 4px solid #1b5e20;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                padding: 10px 14px !important;
+                margin: 4px 0 !important;
+                display: block !important;
+                text-decoration: none !important;
+                border: none !important;
             }
-            .custom-menu .destacado a {
-                color: white !important;
-            }
-            .custom-menu .destacado:hover {
+            .btn-resultados:hover {
                 background-color: #1b5e20 !important;
             }
+            .btn-normal {
+                background-color: transparent !important;
+                color: #262730 !important;
+                border-radius: 8px !important;
+                padding: 10px 14px !important;
+                margin: 4px 0 !important;
+                display: block !important;
+                text-decoration: none !important;
+                border: none !important;
+            }
+            .btn-normal:hover {
+                background-color: #f0f0f0 !important;
+            }
         </style>
-        
-        <ul class="custom-menu">
-            <li class="destacado"><a href="/pages/1_📊_Resultados">📊 Resultados</a></li>
-            <li><a href="/pages/3_🏦_Bancos">🏦 Bancos</a></li>
-            <li><a href="/pages/4_🍺_Quilmes">🍺 Quilmes</a></li>
-            <li><a href="/pages/5_💰_Cierre_Caja">💰 Cierre de Caja</a></li>
-            <li><a href="/pages/6_📈_Plazos_Fijos">📈 Plazos Fijos</a></li>
-            <li><a href="/pages/8_📊_Creditos">📊 Créditos</a></li>
-            <li><a href="/pages/7_⚙️_Administracion">⚙️ Administración</a></li>
-        </ul>
         """, unsafe_allow_html=True)
+        
+        st.markdown('<a href="/pages/1_📊_Resultados" class="btn-resultados">📊 Resultados</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/3_🏦_Bancos" class="btn-normal">🏦 Bancos</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/4_🍺_Quilmes" class="btn-normal">🍺 Quilmes</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/5_💰_Cierre_Caja" class="btn-normal">💰 Cierre de Caja</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/6_📈_Plazos_Fijos" class="btn-normal">📈 Plazos Fijos</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/8_📊_Creditos" class="btn-normal">📊 Créditos</a>', unsafe_allow_html=True)
+        st.markdown('<a href="/pages/7_⚙️_Administracion" class="btn-normal">⚙️ Administración</a>', unsafe_allow_html=True)
 
         st.markdown("---")
 
