@@ -162,7 +162,3 @@ def mostrar_tarjeta_pf(detalle_pf):
     )
 
     st.divider()
-
-    st.markdown(
-        f"### Total PF: $ {total:,.0f}".replace(",",".")
-    )
