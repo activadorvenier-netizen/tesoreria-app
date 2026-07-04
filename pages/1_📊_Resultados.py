@@ -14,6 +14,10 @@ from utils.resultados_ui import (
     mostrar_tarjeta_pf
 )
 
+from utils.config import configurar_pagina
+from utils.layout import mostrar_sidebar
+
+configurar_pagina()
 mostrar_sidebar()
 
 col1, col2 = st.columns([3,1])
