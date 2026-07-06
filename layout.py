@@ -11,53 +11,21 @@ def mostrar_sidebar():
         
         st.divider()
         
-        # ✅ CSS MEJORADO para ocultar "app" y menú automático
+        # ✅ CSS para ocultar "app" y menú automático
         st.markdown("""
         <style>
-            /* === OCULTAR "app" DEL SIDEBAR === */
-            /* Selector principal del enlace "app" */
+            /* Ocultar el enlace "app" */
             .st-emotion-cache-1wivap2 {
                 display: none !important;
             }
-            .st-emotion-cache-1wivap2 a {
-                display: none !important;
-            }
-            
-            /* Selector alternativo para Streamlit más reciente */
-            .st-emotion-cache-1wivap2 {
-                display: none !important;
-            }
-            
-            /* Cualquier enlace que contenga "app" en el sidebar */
-            .stSidebar a[href*="app"] {
-                display: none !important;
-            }
-            .stSidebar a[href*="app.py"] {
-                display: none !important;
-            }
-            
-            /* Elemento contenedor del enlace "app" */
-            .stSidebar .st-emotion-cache-1wivap2 {
-                display: none !important;
-            }
-            .stSidebar .st-emotion-cache-1wivap2 a {
-                display: none !important;
-            }
-            
-            /* === OCULTAR MENÚ AUTOMÁTICO === */
+            /* Ocultar menú automático de Streamlit */
             [data-testid="stSidebarNav"] {
                 display: none !important;
             }
-            [data-testid="stSidebarNav"] a {
-                display: none !important;
-            }
-            
-            /* === OCULTAR FOOTER === */
             [data-testid="stFooter"] {
                 display: none !important;
             }
-            
-            /* === ESTILO PARA RESULTADOS EN VERDE === */
+            /* Estilo para el botón de Resultados en VERDE */
             button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
                 background-color: #2e7d32 !important;
                 color: white !important;
@@ -65,19 +33,6 @@ def mostrar_sidebar():
             }
             button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"]:hover {
                 background-color: #1b5e20 !important;
-            }
-            
-            /* === OCULTAR CUALQUIER OTRO ENLACE NO DESEADO === */
-            .stSidebar .st-emotion-cache-1wivap2 {
-                display: none !important;
-            }
-            .stSidebar .st-emotion-cache-1wivap2 a {
-                display: none !important;
-            }
-            
-            /* === OCULTAR EL TEXTO "app" EN CUALQUIER LUGAR === */
-            .stSidebar a:contains("app") {
-                display: none !important;
             }
         </style>
         """, unsafe_allow_html=True)
