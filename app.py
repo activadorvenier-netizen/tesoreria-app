@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ============================================
-# SIDEBAR - SOLO AQUÍ
+# SIDEBAR
 # ============================================
 
 with st.sidebar:
@@ -22,7 +22,7 @@ with st.sidebar:
     
     st.divider()
     
-    # ✅ CSS para ocultar "app" y menú automático
+    # ✅ CSS para ocultar "app", menú automático y colorear Resultados
     st.markdown("""
     <style>
         .st-emotion-cache-1wivap2 {
@@ -34,6 +34,7 @@ with st.sidebar:
         [data-testid="stFooter"] {
             display: none !important;
         }
+        /* ✅ Resultados en VERDE */
         button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
             background-color: #2e7d32 !important;
             color: white !important;
@@ -45,24 +46,24 @@ with st.sidebar:
     </style>
     """, unsafe_allow_html=True)
     
-    # ✅ Menú lateral
+    # ✅ Menú lateral en el ORDEN CORRECTO
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
         st.switch_page("app.py")
     
-    if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
-        st.switch_page("pages/3_🏦_Bancos.py")
-    
-    if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
-        st.switch_page("pages/4_🍺_Quilmes.py")
-    
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
         st.switch_page("pages/5_💰_Cierre_Caja.py")
+    
+    if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
+        st.switch_page("pages/3_🏦_Bancos.py")
     
     if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
         st.switch_page("pages/6_📈_Plazos_Fijos.py")
     
     if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
         st.switch_page("pages/8_📊_Creditos.py")
+    
+    if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
+        st.switch_page("pages/4_🍺_Quilmes.py")
     
     if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
         st.switch_page("pages/7_⚙️_Administracion.py")
