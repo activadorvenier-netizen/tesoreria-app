@@ -18,14 +18,44 @@ with st.sidebar:
     
     st.divider()
     
-    # ✅ Menú con st.page_link (ESTO SIEMPRE FUNCIONA)
-    st.page_link("pages/1_📊_Resultados.py", label="📊 Resultados", icon="📊")
-    st.page_link("pages/3_🏦_Bancos.py", label="🏦 Bancos", icon="🏦")
-    st.page_link("pages/4_🍺_Quilmes.py", label="🍺 Quilmes", icon="🍺")
-    st.page_link("pages/5_💰_Cierre_Caja.py", label="💰 Cierre de Caja", icon="💰")
-    st.page_link("pages/6_📈_Plazos_Fijos.py", label="📈 Plazos Fijos", icon="📈")
-    st.page_link("pages/8_📊_Creditos.py", label="📊 Créditos", icon="📊")
-    st.page_link("pages/7_⚙️_Administracion.py", label="⚙️ Administración", icon="⚙️")
+    # ✅ CSS para ocultar "app" y menú automático
+    st.markdown("""
+    <style>
+        /* Ocultar el enlace "app" */
+        .st-emotion-cache-1wivap2 {
+            display: none !important;
+        }
+        /* Ocultar menú automático de Streamlit */
+        [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        [data-testid="stFooter"] {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # ✅ RESULTADOS en VERDE (con type="primary")
+    if st.button("📊 Resultados", key="menu_resultados", use_container_width=True, type="primary"):
+        st.switch_page("pages/1_📊_Resultados.py")
+    
+    if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
+        st.switch_page("pages/3_🏦_Bancos.py")
+    
+    if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
+        st.switch_page("pages/4_🍺_Quilmes.py")
+    
+    if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
+        st.switch_page("pages/5_💰_Cierre_Caja.py")
+    
+    if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
+        st.switch_page("pages/6_📈_Plazos_Fijos.py")
+    
+    if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
+        st.switch_page("pages/8_📊_Creditos.py")
+    
+    if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
+        st.switch_page("pages/7_⚙️_Administracion.py")
     
     st.divider()
     
