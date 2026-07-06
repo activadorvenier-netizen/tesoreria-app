@@ -109,20 +109,30 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         (bancos["Fecha"] <= fecha_consulta)
     ].copy()
 
-    galicia = 0
-    macro = 0
-    credicoop = 0
-    santander = 0
+    # ✅ Inicializar TODOS los valores
+    galicia_saldo = 0
+    galicia_fci = 0
+    macro_saldo = 0
+    macro_fci = 0
+    credicoop_saldo = 0
+    credicoop_fci = 0
+    santander_saldo = 0
+    santander_fci = 0
 
     if not bancos_emp.empty:
         bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
         ultimo = bancos_emp.iloc[0]
 
-        galicia = float(ultimo["GaliciaSaldo"]) + float(ultimo["GaliciaFCI"])
-        macro = float(ultimo["MacroSaldo"]) + float(ultimo["MacroFCI"])
-        credicoop = float(ultimo["CredicoopSaldo"]) + float(ultimo["CredicoopFCI"])
-        santander = float(ultimo["SantanderSaldo"]) + float(ultimo["SantanderFCI"])
+        galicia_saldo = float(ultimo["GaliciaSaldo"])
+        galicia_fci = float(ultimo["GaliciaFCI"])
+        macro_saldo = float(ultimo["MacroSaldo"])
+        macro_fci = float(ultimo["MacroFCI"])
+        credicoop_saldo = float(ultimo["CredicoopSaldo"])
+        credicoop_fci = float(ultimo["CredicoopFCI"])
+        santander_saldo = float(ultimo["SantanderSaldo"])
+        santander_fci = float(ultimo["SantanderFCI"])
 
+    # ✅ Obtener plazos fijos de la empresa
     detalle_pf = pd.DataFrame()
     pf_galicia = 0
     pf_macro = 0
@@ -138,18 +148,26 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
 
-    total_bancos = galicia + macro + credicoop + santander
+    total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
     total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander
 
+    # ✅ RETORNAR TODOS LOS DATOS POR SEPARADO
     return {
-        "galicia": galicia,
-        "macro": macro,
-        "credicoop": credicoop,
-        "santander": santander,
+        # Saldos y FCI por banco
+        "GaliciaSaldo": galicia_saldo,
+        "GaliciaFCI": galicia_fci,
+        "MacroSaldo": macro_saldo,
+        "MacroFCI": macro_fci,
+        "CredicoopSaldo": credicoop_saldo,
+        "CredicoopFCI": credicoop_fci,
+        "SantanderSaldo": santander_saldo,
+        "SantanderFCI": santander_fci,
+        # Plazos fijos por banco
         "pf_galicia": pf_galicia,
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
+        # Totales
         "total_bancos": total_bancos,
         "total_pf": total_pf,
         "detalle_pf": detalle_pf
