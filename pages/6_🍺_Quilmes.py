@@ -9,7 +9,6 @@ from utils.sheets import (
     actualizar_quilmes,
     eliminar_quilmes
 )
-from utils.layout import mostrar_sidebar
 
 # ✅ Configurar la página
 st.set_page_config(
@@ -17,9 +16,6 @@ st.set_page_config(
     page_icon="🍺",
     layout="wide"
 )
-
-# ✅ Mostrar el sidebar
-mostrar_sidebar()
 
 st.title("🍺 Quilmes")
 
