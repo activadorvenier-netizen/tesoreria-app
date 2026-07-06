@@ -2,11 +2,30 @@ import streamlit as st
 import pandas as pd
 
 def mostrar_tarjeta_bancos(empresa, bancos_empresa):
-    """Muestra la tarjeta de bancos con formato: Saldo, FCI, Total Disponible, Plazo Fijo"""
+    """Muestra la tarjeta de bancos con Saldo, FCI, Total Disponible y Plazo Fijo"""
     
     st.subheader("🏦 Bancos")
 
     with st.container(border=True):
+
+        # ✅ Estilos para la tabla
+        st.markdown("""
+        <style>
+            .total-disponible {
+                background-color: #e3f2fd !important;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+            }
+            .total-row {
+                background-color: #f5f5f5 !important;
+                font-weight: 600;
+            }
+            .otros-bancos {
+                background-color: #fff3e0 !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
 
         # ✅ 5 columnas: Banco | Saldo | FCI | Total Disponible | Plazo Fijo
         h1, h2, h3, h4, h5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
@@ -19,93 +38,72 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
 
         st.divider()
 
-        # ✅ Lista de bancos con los nombres EXACTOS de las claves
-        bancos = [
-            {
-                "nombre": "Galicia",
-                "saldo": bancos_empresa.get("GaliciaSaldo", 0),
-                "fci": bancos_empresa.get("GaliciaFCI", 0),
-                "pf": bancos_empresa.get("pf_galicia", 0)
-            },
-            {
-                "nombre": "Macro",
-                "saldo": bancos_empresa.get("MacroSaldo", 0),
-                "fci": bancos_empresa.get("MacroFCI", 0),
-                "pf": bancos_empresa.get("pf_macro", 0)
-            },
-            {
-                "nombre": "Credicoop",
-                "saldo": bancos_empresa.get("CredicoopSaldo", 0),
-                "fci": bancos_empresa.get("CredicoopFCI", 0),
-                "pf": bancos_empresa.get("pf_credicoop", 0)
-            },
-            {
-                "nombre": "Santander",
-                "saldo": bancos_empresa.get("SantanderSaldo", 0),
-                "fci": bancos_empresa.get("SantanderFCI", 0),
-                "pf": bancos_empresa.get("pf_santander", 0)
-            },
-        ]
-
         # ✅ Inicializar totales
         total_saldo = 0
         total_fci = 0
         total_disponible = 0
         total_pf = 0
 
-        # ✅ Mostrar cada banco
+        # ✅ Mostrar bancos principales
+        bancos = [
+            {"nombre": "Galicia", "saldo": "GaliciaSaldo", "fci": "GaliciaFCI", "pf": "pf_galicia"},
+            {"nombre": "Macro", "saldo": "MacroSaldo", "fci": "MacroFCI", "pf": "pf_macro"},
+            {"nombre": "Credicoop", "saldo": "CredicoopSaldo", "fci": "CredicoopFCI", "pf": "pf_credicoop"},
+            {"nombre": "Santander", "saldo": "SantanderSaldo", "fci": "SantanderFCI", "pf": "pf_santander"},
+        ]
+
         for banco in bancos:
-            disponible = banco["saldo"] + banco["fci"]
+            saldo = bancos_empresa.get(banco["saldo"], 0)
+            fci = bancos_empresa.get(banco["fci"], 0)
+            pf = bancos_empresa.get(banco["pf"], 0)
+            disponible = saldo + fci
             
             c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
-
             c1.write(f"🏦 {banco['nombre']}")
-            c2.write(f"$ {banco['saldo']:,.0f}".replace(",", "."))
-            c3.write(f"$ {banco['fci']:,.0f}".replace(",", "."))
-            c4.markdown(f"**$ {disponible:,.0f}**".replace(",", "."))
-            c5.write(f"$ {banco['pf']:,.0f}".replace(",", "."))
+            c2.write(f"$ {saldo:,.0f}".replace(",", "."))
+            c3.write(f"$ {fci:,.0f}".replace(",", "."))
+            c4.markdown(
+                f"<div class='total-disponible'>$ {disponible:,.0f}</div>".replace(",", "."),
+                unsafe_allow_html=True
+            )
+            c5.write(f"$ {pf:,.0f}".replace(",", "."))
             
-            total_saldo += banco["saldo"]
-            total_fci += banco["fci"]
+            total_saldo += saldo
+            total_fci += fci
             total_disponible += disponible
-            total_pf += banco["pf"]
+            total_pf += pf
 
-        # ✅ Buscar OTROS bancos (Provincia, BBVA, ICBC, etc.)
-        otros_bancos = []
-        for key in bancos_empresa.keys():
-            # Si la clave termina en "Saldo" y no es de los bancos principales
-            if key.endswith("Saldo") and key not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
-                nombre = key.replace("Saldo", "")
-                fci_key = f"{nombre}FCI"
-                pf_key = f"pf_{nombre.lower()}"
-                
-                saldo = bancos_empresa.get(key, 0)
-                fci = bancos_empresa.get(fci_key, 0)
-                pf = bancos_empresa.get(pf_key, 0)
-                
-                # Solo mostrar si tiene algún valor > 0
-                if saldo > 0 or fci > 0 or pf > 0:
-                    otros_bancos.append({
-                        "nombre": nombre,
-                        "saldo": saldo,
-                        "fci": fci,
-                        "pf": pf
-                    })
-                    total_saldo += saldo
-                    total_fci += fci
-                    total_disponible += saldo + fci
-                    total_pf += pf
-
-        # ✅ Mostrar otros bancos
+        # ✅ Mostrar "OTROS BANCOS" si existen
+        otros_bancos = bancos_empresa.get("otros_bancos", {})
+        pf_otros = bancos_empresa.get("pf_otros", {})
+        
         if otros_bancos:
-            for otro in otros_bancos:
-                disponible = otro["saldo"] + otro["fci"]
+            # Línea separadora
+            st.divider()
+            
+            # Título "Otros Bancos"
+            st.markdown("**🏦 Otros Bancos**")
+            
+            for nombre, datos in otros_bancos.items():
+                saldo = datos.get("saldo", 0)
+                fci = datos.get("fci", 0)
+                pf = pf_otros.get(nombre, 0)
+                disponible = saldo + fci
+                
                 c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
-                c1.write(f"🏦 {otro['nombre']}")
-                c2.write(f"$ {otro['saldo']:,.0f}".replace(",", "."))
-                c3.write(f"$ {otro['fci']:,.0f}".replace(",", "."))
-                c4.markdown(f"**$ {disponible:,.0f}**".replace(",", "."))
-                c5.write(f"$ {otro['pf']:,.0f}".replace(",", "."))
+                c1.write(f"🏦 {nombre}")
+                c2.write(f"$ {saldo:,.0f}".replace(",", "."))
+                c3.write(f"$ {fci:,.0f}".replace(",", "."))
+                c4.markdown(
+                    f"<div class='total-disponible'>$ {disponible:,.0f}</div>".replace(",", "."),
+                    unsafe_allow_html=True
+                )
+                c5.write(f"$ {pf:,.0f}".replace(",", "."))
+                
+                total_saldo += saldo
+                total_fci += fci
+                total_disponible += disponible
+                total_pf += pf
 
         # ✅ Totales
         st.divider()
@@ -113,7 +111,10 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
         c1.markdown("**TOTAL**")
         c2.markdown(f"**$ {total_saldo:,.0f}**".replace(",", "."))
         c3.markdown(f"**$ {total_fci:,.0f}**".replace(",", "."))
-        c4.markdown(f"**$ {total_disponible:,.0f}**".replace(",", "."))
+        c4.markdown(
+            f"<div class='total-disponible'>$ {total_disponible:,.0f}</div>".replace(",", "."),
+            unsafe_allow_html=True
+        )
         c5.markdown(f"**$ {total_pf:,.0f}**".replace(",", "."))
 
 

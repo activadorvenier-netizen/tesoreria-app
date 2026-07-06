@@ -109,7 +109,7 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         (bancos["Fecha"] <= fecha_consulta)
     ].copy()
 
-    # ✅ Inicializar TODOS los valores
+    # Inicializar todos los valores
     galicia_saldo = 0
     galicia_fci = 0
     macro_saldo = 0
@@ -118,11 +118,15 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     credicoop_fci = 0
     santander_saldo = 0
     santander_fci = 0
+    
+    # Diccionario para otros bancos
+    otros_bancos = {}
 
     if not bancos_emp.empty:
         bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
         ultimo = bancos_emp.iloc[0]
 
+        # Obtener datos de los bancos principales
         galicia_saldo = float(ultimo["GaliciaSaldo"])
         galicia_fci = float(ultimo["GaliciaFCI"])
         macro_saldo = float(ultimo["MacroSaldo"])
@@ -131,13 +135,31 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         credicoop_fci = float(ultimo["CredicoopFCI"])
         santander_saldo = float(ultimo["SantanderSaldo"])
         santander_fci = float(ultimo["SantanderFCI"])
+        
+        # ✅ Buscar otros bancos (Provincia, BBVA, ICBC, etc.)
+        # Recorrer todas las columnas del último registro
+        for col in ultimo.index:
+            # Si la columna termina en "Saldo" y no es de los bancos principales
+            if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
+                nombre = col.replace("Saldo", "")
+                fci_col = f"{nombre}FCI"
+                saldo = float(ultimo[col]) if ultimo[col] else 0
+                fci = float(ultimo[fci_col]) if fci_col in ultimo and ultimo[fci_col] else 0
+                
+                # Solo guardar si tiene algún valor
+                if saldo > 0 or fci > 0:
+                    otros_bancos[nombre] = {
+                        "saldo": saldo,
+                        "fci": fci
+                    }
 
-    # ✅ Obtener plazos fijos de la empresa
+    # Obtener plazos fijos de la empresa
     detalle_pf = pd.DataFrame()
     pf_galicia = 0
     pf_macro = 0
     pf_credicoop = 0
     pf_santander = 0
+    pf_otros = {}  # ✅ Plazos fijos de otros bancos
 
     if not plazos_fijos.empty:
         detalle_pf = plazos_fijos[plazos_fijos["Empresa"] == empresa].copy()
@@ -147,11 +169,16 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
+            
+            # ✅ Buscar plazos fijos de otros bancos
+            for banco in detalle_pf["Banco"].unique():
+                if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
+                    pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
 
     total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
-    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander
+    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + sum(pf_otros.values())
 
-    # ✅ RETORNAR TODOS LOS DATOS POR SEPARADO
+    # ✅ RETORNAR TODOS LOS DATOS
     return {
         # Saldos y FCI por banco
         "GaliciaSaldo": galicia_saldo,
@@ -167,6 +194,9 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
+        # ✅ Otros bancos (dinámicos)
+        "otros_bancos": otros_bancos,
+        "pf_otros": pf_otros,
         # Totales
         "total_bancos": total_bancos,
         "total_pf": total_pf,
