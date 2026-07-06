@@ -8,6 +8,18 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
 
     with st.container(border=True):
 
+        # ✅ Estilos para la tabla
+        st.markdown("""
+        <style>
+            .total-disponible {
+                background-color: #e3f2fd !important;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
         # ✅ 5 columnas: Banco | Saldo | FCI | Total Disponible | Plazo Fijo
         h1, h2, h3, h4, h5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
 
@@ -62,7 +74,11 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
             c1.write(f"🏦 {banco['nombre']}")
             c2.write(f"$ {banco['saldo']:,.0f}".replace(",", "."))
             c3.write(f"$ {banco['fci']:,.0f}".replace(",", "."))
-            c4.markdown(f"**$ {disponible:,.0f}**".replace(",", "."))
+            # ✅ Columna "Total Disponible" con fondo azul clarito
+            c4.markdown(
+                f"<div class='total-disponible'>$ {disponible:,.0f}</div>".replace(",", "."),
+                unsafe_allow_html=True
+            )
             c5.write(f"$ {banco['pf']:,.0f}".replace(",", "."))
             
             total_saldo += banco["saldo"]
@@ -104,7 +120,11 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
                 c1.write(f"🏦 {otro['nombre']}")
                 c2.write(f"$ {otro['saldo']:,.0f}".replace(",", "."))
                 c3.write(f"$ {otro['fci']:,.0f}".replace(",", "."))
-                c4.markdown(f"**$ {disponible:,.0f}**".replace(",", "."))
+                # ✅ Columna "Total Disponible" con fondo azul clarito
+                c4.markdown(
+                    f"<div class='total-disponible'>$ {disponible:,.0f}</div>".replace(",", "."),
+                    unsafe_allow_html=True
+                )
                 c5.write(f"$ {otro['pf']:,.0f}".replace(",", "."))
 
         # ✅ Totales
@@ -113,5 +133,9 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
         c1.markdown("**TOTAL**")
         c2.markdown(f"**$ {total_saldo:,.0f}**".replace(",", "."))
         c3.markdown(f"**$ {total_fci:,.0f}**".replace(",", "."))
-        c4.markdown(f"**$ {total_disponible:,.0f}**".replace(",", "."))
+        # ✅ Total de "Total Disponible" con fondo azul clarito
+        c4.markdown(
+            f"<div class='total-disponible'>$ {total_disponible:,.0f}</div>".replace(",", "."),
+            unsafe_allow_html=True
+        )
         c5.markdown(f"**$ {total_pf:,.0f}**".replace(",", "."))
