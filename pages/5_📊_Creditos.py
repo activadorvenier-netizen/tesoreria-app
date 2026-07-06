@@ -84,14 +84,13 @@ def calcular_cuota(monto, tasa, cuotas):
     if tasa == 0:
         return monto / cuotas
     
-    # ✅ Convertir tasa anual a tasa mensual
     tasa_mensual = tasa / 100 / 12
     cuota = monto * (tasa_mensual * (1 + tasa_mensual) ** cuotas) / ((1 + tasa_mensual) ** cuotas - 1)
     return cuota
 
 def generar_amortizacion(monto, tasa, cuotas, fecha_inicio):
     """
-    Genera el cronograma de amortización
+    Genera el cronograma de amortización (SIN columna Saldo)
     """
     monto = limpiar_numero(monto)
     tasa = limpiar_numero(tasa)
@@ -101,25 +100,13 @@ def generar_amortizacion(monto, tasa, cuotas, fecha_inicio):
         return []
         
     cuota_mensual = calcular_cuota(monto, tasa, cuotas)
-    saldo = monto
     amortizacion = []
-    tasa_mensual = tasa / 100 / 12 if tasa > 0 else 0
     
     for i in range(cuotas):
         fecha = fecha_inicio + relativedelta(months=i+1)
-        if tasa > 0:
-            interes = saldo * tasa_mensual
-            capital = cuota_mensual - interes
-        else:
-            capital = cuota_mensual
-            interes = 0
-        saldo -= capital
         amortizacion.append({
             "Fecha": fecha,
             "Cuota": cuota_mensual,
-            "Capital": capital,
-            "Interes": interes,
-            "Saldo": max(saldo, 0),
             "Pagada": "NO"
         })
     
@@ -402,7 +389,6 @@ for tab, empresa in zip(tabs, empresas):
                                     int(ultimo_id),
                                     cuota['fecha'],
                                     float(cuota['monto']),
-                                    0,
                                     "NO"
                                 ])
                                 time.sleep(0.1)
@@ -418,7 +404,6 @@ for tab, empresa in zip(tabs, empresas):
                                     int(ultimo_id),
                                     item["Fecha"].strftime("%Y-%m-%d"),
                                     float(item["Cuota"]),
-                                    float(item["Saldo"]),
                                     "NO"
                                 ])
                                 time.sleep(0.1)
@@ -566,8 +551,8 @@ for tab, empresa in zip(tabs, empresas):
                 for _, credito in df_vigentes.iterrows():
                     df_amort_cred = df_amort_all[df_amort_all["ID Credito"] == credito["ID"]]
                     if not df_amort_cred.empty:
-                        df_amort_cred_pendientes = df_amort_cred[df_amort_cred.get("Pagada", "NO") != "SI"]
-                        saldo_total += df_amort_cred_pendientes["Cuota"].sum() if not df_amort_cred_pendientes.empty else 0
+                        cuotas_pendientes = df_amort_cred[df_amort_cred.get("Pagada", "NO") != "SI"]
+                        saldo_total += cuotas_pendientes["Cuota"].sum() if not cuotas_pendientes.empty else 0
                 
                 pct_pagado = ((monto_total - saldo_total) / monto_total * 100) if monto_total > 0 else 0
                 
@@ -634,7 +619,6 @@ for tab, empresa in zip(tabs, empresas):
                 col1, col2, col3 = st.columns([2, 1, 2])
                 
                 with col1:
-                    # ✅ Clave única por empresa
                     mes_seleccionado_key = st.selectbox(
                         "Seleccionar Mes",
                         options=[m["key"] for m in opciones_meses],
@@ -857,7 +841,6 @@ for tab, empresa in zip(tabs, empresas):
                                             int(fila["ID"]),
                                             item["Fecha"].strftime("%Y-%m-%d"),
                                             float(item["Cuota"]),
-                                            float(item["Saldo"]),
                                             "NO"
                                         ])
                                         time.sleep(0.1)
@@ -939,7 +922,7 @@ for tab, empresa in zip(tabs, empresas):
                                         st.session_state.eliminar_credito = fila["ID"]
                                         st.rerun()
                         
-                        # TARJETA INFERIOR - AMORTIZACIÓN (CON RECALCULO)
+                        # TARJETA INFERIOR - AMORTIZACIÓN (SIN SALDO)
                         st.subheader("📋 Detalle de Amortización")
                         
                         if not df_amort_cred.empty:
@@ -963,33 +946,6 @@ for tab, empresa in zip(tabs, empresas):
                                     pct = max(0, min(100, (total_pagado / total_a_pagar * 100)))
                                     st.progress(min(pct/100, 1.0))
                                     st.caption(f"Pagado: {pct:.1f}%")
-                                
-                                # ✅ Botón RECALCULAR (solo si hay cuotas pendientes)
-                                if not cuotas_pendientes_df.empty:
-                                    if st.button("🔄 Recalcular Saldos", key=f"recalc_{fila['ID']}"):
-                                        # Eliminar amortización actual
-                                        if not df_amort_cred.empty:
-                                            df_amort_del = df_amort[df_amort["ID Credito"] == fila["ID"]]
-                                            for idx in reversed(df_amort_del.index.tolist()):
-                                                hoja_amortizacion.delete_rows(idx + 2)
-                                                time.sleep(0.1)
-                                        
-                                        # Regenerar amortización
-                                        fecha_inicio = pd.to_datetime(fila["Fecha Inicio"]).date()
-                                        nueva_amort = generar_amortizacion(monto_valor, tasa_valor, cuotas_valor, fecha_inicio)
-                                        for item in nueva_amort:
-                                            hoja_amortizacion.append_row([
-                                                int(fila["ID"]),
-                                                item["Fecha"].strftime("%Y-%m-%d"),
-                                                float(item["Cuota"]),
-                                                float(item["Saldo"]),
-                                                "NO"
-                                            ])
-                                            time.sleep(0.1)
-                                        
-                                        limpiar_cache_creditos()
-                                        st.success("✅ Saldos recalculados correctamente!")
-                                        st.rerun()
                             
                             with col2:
                                 if total_a_pagar > 0:
@@ -1035,7 +991,7 @@ for tab, empresa in zip(tabs, empresas):
                                             registros_amort = hoja_amortizacion.get_all_records()
                                             for i, r in enumerate(registros_amort, start=2):
                                                 if r["ID Credito"] == fila["ID"] and r["Fecha"] == fecha_cuota:
-                                                    hoja_amortizacion.update(f"E{i}", [["SI"]])
+                                                    hoja_amortizacion.update(f"D{i}", [["SI"]])
                                                     break
                                             limpiar_cache_creditos()
                                             st.rerun()
