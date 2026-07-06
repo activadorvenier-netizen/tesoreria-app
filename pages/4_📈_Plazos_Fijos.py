@@ -9,7 +9,6 @@ from utils.sheets import (
     actualizar_plazo_fijo,
     eliminar_plazo_fijo
 )
-from utils.layout import mostrar_sidebar
 
 # ✅ Configurar la página
 st.set_page_config(
@@ -17,8 +16,6 @@ st.set_page_config(
     page_icon="📈",
     layout="wide"
 )
-
-mostrar_sidebar()
 
 st.title("📈 Plazos Fijos")
 

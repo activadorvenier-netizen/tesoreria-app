@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime, date
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
-from utils.layout import mostrar_sidebar
 
 st.set_page_config(
     page_title="Tesorería - Resultados",
@@ -11,10 +10,8 @@ st.set_page_config(
     layout="wide"
 )
 
-mostrar_sidebar()
-
 # ============================================
-# SIDEBAR
+# SIDEBAR - SOLO AQUÍ
 # ============================================
 
 with st.sidebar:
@@ -25,31 +22,18 @@ with st.sidebar:
     
     st.divider()
     
-    # ✅ CSS para ocultar "app" y menú automático (VERSIÓN MEJORADA)
+    # ✅ CSS para ocultar "app" y menú automático
     st.markdown("""
     <style>
-        /* Ocultar el enlace "app" - múltiples selectores para asegurar */
         .st-emotion-cache-1wivap2 {
             display: none !important;
         }
-        .st-emotion-cache-1wivap2 a {
-            display: none !important;
-        }
-        /* Ocultar menú automático de Streamlit */
         [data-testid="stSidebarNav"] {
-            display: none !important;
-        }
-        [data-testid="stSidebarNav"] a {
-            display: none !important;
-        }
-        /* Ocultar cualquier enlace que contenga "app" en el sidebar */
-        .stSidebar a[href*="app"] {
             display: none !important;
         }
         [data-testid="stFooter"] {
             display: none !important;
         }
-        /* Estilo para el botón de Resultados en VERDE */
         button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
             background-color: #2e7d32 !important;
             color: white !important;
@@ -58,17 +42,10 @@ with st.sidebar:
         button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"]:hover {
             background-color: #1b5e20 !important;
         }
-        /* Asegurar que ningún otro elemento del sidebar muestre "app" */
-        .stSidebar .st-emotion-cache-1wivap2 {
-            display: none !important;
-        }
-        .stSidebar .st-emotion-cache-1wivap2 a {
-            display: none !important;
-        }
     </style>
     """, unsafe_allow_html=True)
     
-    # ✅ Menú lateral - RESULTADOS en VERDE
+    # ✅ Menú lateral
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
         st.switch_page("app.py")
     
