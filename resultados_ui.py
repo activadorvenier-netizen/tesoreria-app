@@ -21,30 +21,28 @@ def mostrar_tarjeta_bancos(
 
         st.divider()
 
-        # ✅ Bancos definidos
-        bancos_definidos = ["Galicia", "Macro", "Credicoop", "Santander"]
+        # ✅ Lista de bancos con sus claves exactas
+        bancos = [
+            {"nombre": "Galicia", "saldo_key": "GaliciaSaldo", "fci_key": "GaliciaFCI", "pf_key": "pf_galicia"},
+            {"nombre": "Macro", "saldo_key": "MacroSaldo", "fci_key": "MacroFCI", "pf_key": "pf_macro"},
+            {"nombre": "Credicoop", "saldo_key": "CredicoopSaldo", "fci_key": "CredicoopFCI", "pf_key": "pf_credicoop"},
+            {"nombre": "Santander", "saldo_key": "SantanderSaldo", "fci_key": "SantanderFCI", "pf_key": "pf_santander"},
+        ]
         
-        # ✅ Almacenar totales
         total_saldo = 0
         total_fci = 0
         total_disponible = 0
         total_pf = 0
         
-        # ✅ Mostrar bancos definidos
-        for banco in bancos_definidos:
-            # Obtener saldo y FCI del banco (usando los nombres exactos de columnas)
-            saldo_key = f"{banco}Saldo"
-            fci_key = f"{banco}FCI"
-            pf_key = f"pf_{banco.lower()}"
-            
-            saldo = bancos_empresa.get(saldo_key, 0)
-            fci = bancos_empresa.get(fci_key, 0)
-            pf = bancos_empresa.get(pf_key, 0)
+        for banco in bancos:
+            saldo = bancos_empresa.get(banco["saldo_key"], 0)
+            fci = bancos_empresa.get(banco["fci_key"], 0)
+            pf = bancos_empresa.get(banco["pf_key"], 0)
             disponible = saldo + fci
             
             c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
 
-            c1.write(f"🏦 {banco}")
+            c1.write(f"🏦 {banco['nombre']}")
             c2.write(f"$ {saldo:,.0f}".replace(",", "."))
             c3.write(f"$ {fci:,.0f}".replace(",", "."))
             c4.markdown(f"**$ {disponible:,.0f}**".replace(",", "."))
@@ -55,38 +53,32 @@ def mostrar_tarjeta_bancos(
             total_disponible += disponible
             total_pf += pf
 
-        # ✅ Procesar otros bancos (Provincia, BBVA, ICBC, etc.)
-        # Buscar en bancos_empresa las claves que terminen en "Saldo"
+        # ✅ Buscar otros bancos (Provincia, BBVA, etc.)
         otros_bancos = []
         for key in bancos_empresa.keys():
-            # Si la clave termina en "Saldo" y no es de los bancos definidos
-            if key.endswith("Saldo") and not any(banco in key for banco in bancos_definidos):
-                nombre_banco = key.replace("Saldo", "")
+            if key.endswith("Saldo") and key not in [b["saldo_key"] for b in bancos]:
+                nombre = key.replace("Saldo", "")
+                fci_key = f"{nombre}FCI"
+                pf_key = f"pf_{nombre.lower()}"
                 saldo = bancos_empresa.get(key, 0)
-                fci_key = f"{nombre_banco}FCI"
                 fci = bancos_empresa.get(fci_key, 0)
-                pf_key = f"pf_{nombre_banco.lower()}"
                 pf = bancos_empresa.get(pf_key, 0)
-                disponible = saldo + fci
-                
                 if saldo > 0 or fci > 0 or pf > 0:
                     otros_bancos.append({
-                        "nombre": nombre_banco,
+                        "nombre": nombre,
                         "saldo": saldo,
                         "fci": fci,
-                        "disponible": disponible,
-                        "pf": pf
+                        "pf": pf,
+                        "disponible": saldo + fci
                     })
                     total_saldo += saldo
                     total_fci += fci
-                    total_disponible += disponible
+                    total_disponible += saldo + fci
                     total_pf += pf
 
-        # ✅ Mostrar "Otros Bancos" si hay
         if otros_bancos:
             for otro in otros_bancos:
                 c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
-
                 c1.write(f"🏦 {otro['nombre']}")
                 c2.write(f"$ {otro['saldo']:,.0f}".replace(",", "."))
                 c3.write(f"$ {otro['fci']:,.0f}".replace(",", "."))
@@ -95,9 +87,7 @@ def mostrar_tarjeta_bancos(
 
         # ✅ Totales
         st.divider()
-
         c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 1.2, 1.2, 1.2])
-
         c1.markdown("**TOTAL**")
         c2.markdown(f"**$ {total_saldo:,.0f}**".replace(",", "."))
         c3.markdown(f"**$ {total_fci:,.0f}**".replace(",", "."))
