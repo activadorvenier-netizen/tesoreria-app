@@ -12,13 +12,6 @@ from utils.sheets import (
     limpiar_cache
 )
 
-# ✅ Configurar la página
-st.set_page_config(
-    page_title="Tesorería - Créditos",
-    page_icon="📊",
-    layout="wide"
-)
-
 st.title("📊 Créditos")
 
 # ============================================
@@ -90,6 +83,8 @@ def calcular_cuota(monto, tasa, cuotas):
         
     if tasa == 0:
         return monto / cuotas
+    
+    # ✅ Convertir tasa anual a tasa mensual
     tasa_mensual = tasa / 100 / 12
     cuota = monto * (tasa_mensual * (1 + tasa_mensual) ** cuotas) / ((1 + tasa_mensual) ** cuotas - 1)
     return cuota
@@ -944,11 +939,12 @@ for tab, empresa in zip(tabs, empresas):
                                         st.session_state.eliminar_credito = fila["ID"]
                                         st.rerun()
                         
-                        # TARJETA INFERIOR - AMORTIZACIÓN
+                        # TARJETA INFERIOR - AMORTIZACIÓN (CON RECALCULO)
                         st.subheader("📋 Detalle de Amortización")
                         
                         if not df_amort_cred.empty:
                             
+                            # ✅ Calcular saldo en tiempo real desde cuotas pendientes
                             if "Pagada" not in df_amort_cred.columns:
                                 df_amort_cred["Pagada"] = "NO"
                             
@@ -963,14 +959,44 @@ for tab, empresa in zip(tabs, empresas):
                             
                             with col1:
                                 st.metric("💰 Saldo Actual", formato_moneda(saldo_actual))
+                                if total_a_pagar > 0:
+                                    pct = max(0, min(100, (total_pagado / total_a_pagar * 100)))
+                                    st.progress(min(pct/100, 1.0))
+                                    st.caption(f"Pagado: {pct:.1f}%")
+                                
+                                # ✅ Botón RECALCULAR (solo si hay cuotas pendientes)
+                                if not cuotas_pendientes_df.empty:
+                                    if st.button("🔄 Recalcular Saldos", key=f"recalc_{fila['ID']}"):
+                                        # Eliminar amortización actual
+                                        if not df_amort_cred.empty:
+                                            df_amort_del = df_amort[df_amort["ID Credito"] == fila["ID"]]
+                                            for idx in reversed(df_amort_del.index.tolist()):
+                                                hoja_amortizacion.delete_rows(idx + 2)
+                                                time.sleep(0.1)
+                                        
+                                        # Regenerar amortización
+                                        fecha_inicio = pd.to_datetime(fila["Fecha Inicio"]).date()
+                                        nueva_amort = generar_amortizacion(monto_valor, tasa_valor, cuotas_valor, fecha_inicio)
+                                        for item in nueva_amort:
+                                            hoja_amortizacion.append_row([
+                                                int(fila["ID"]),
+                                                item["Fecha"].strftime("%Y-%m-%d"),
+                                                float(item["Cuota"]),
+                                                float(item["Saldo"]),
+                                                "NO"
+                                            ])
+                                            time.sleep(0.1)
+                                        
+                                        limpiar_cache_creditos()
+                                        st.success("✅ Saldos recalculados correctamente!")
+                                        st.rerun()
                             
                             with col2:
                                 if total_a_pagar > 0:
-                                    pct = max(0, min(100, (total_pagado / total_a_pagar * 100)))
+                                    pct_mostrar = max(0, min(100, (total_pagado / total_a_pagar * 100)))
                                 else:
-                                    pct = 0
-                                st.metric("📈 % Pagado", f"{pct:.1f}%")
-                                st.progress(min(max(pct/100, 0), 1.0))
+                                    pct_mostrar = 0
+                                st.metric("📈 % Pagado", f"{pct_mostrar:.1f}%")
                             
                             with col3:
                                 st.metric("⏳ Cuotas Pendientes", len(cuotas_pendientes_df))
@@ -980,6 +1006,7 @@ for tab, empresa in zip(tabs, empresas):
                             
                             st.divider()
                             
+                            # Listado de todas las cuotas
                             df_amort_ordenado = df_amort_cred.sort_values("Fecha", ascending=True)
                             
                             st.markdown("**📅 Todas las Cuotas**")
