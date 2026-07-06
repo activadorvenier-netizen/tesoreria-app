@@ -9,6 +9,17 @@ from utils.sheets import (
     actualizar_banco,
     eliminar_banco
 )
+from utils.layout import mostrar_sidebar
+
+# ✅ Configurar la página
+st.set_page_config(
+    page_title="Tesorería - Bancos",
+    page_icon="🏦",
+    layout="wide"
+)
+
+# ✅ Mostrar el sidebar
+mostrar_sidebar()
 
 st.title("🏦 Bancos")
 

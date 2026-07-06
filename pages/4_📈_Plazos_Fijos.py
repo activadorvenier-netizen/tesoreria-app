@@ -9,6 +9,17 @@ from utils.sheets import (
     actualizar_plazo_fijo,
     eliminar_plazo_fijo
 )
+from utils.layout import mostrar_sidebar
+
+# ✅ Configurar la página
+st.set_page_config(
+    page_title="Tesorería - Plazos Fijos",
+    page_icon="📈",
+    layout="wide"
+)
+
+# ✅ Mostrar el sidebar
+mostrar_sidebar()
 
 st.title("📈 Plazos Fijos")
 

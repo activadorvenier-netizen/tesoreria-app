@@ -11,6 +11,17 @@ from utils.sheets import (
     eliminar_cierre_caja,
     obtener_todas_cajas
 )
+from utils.layout import mostrar_sidebar
+
+# ✅ Configurar la página
+st.set_page_config(
+    page_title="Tesorería - Cierre de Caja",
+    page_icon="💰",
+    layout="wide"
+)
+
+# ✅ Mostrar el sidebar
+mostrar_sidebar()
 
 st.title("💰 Cierre de Caja")
 
