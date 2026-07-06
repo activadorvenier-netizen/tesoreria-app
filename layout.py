@@ -14,9 +14,11 @@ def mostrar_sidebar():
         # ✅ CSS para ocultar "app" y menú automático
         st.markdown("""
         <style>
+            /* Ocultar el enlace "app" */
             .st-emotion-cache-1wivap2 {
                 display: none !important;
             }
+            /* Ocultar menú automático de Streamlit */
             [data-testid="stSidebarNav"] {
                 display: none !important;
             }
