@@ -3,12 +3,15 @@ import pandas as pd
 from datetime import datetime, date
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
+from utils.layout import mostrar_sidebar
 
 st.set_page_config(
     page_title="Tesorería - Resultados",
     page_icon="💰",
     layout="wide"
 )
+
+mostrar_sidebar()
 
 # ============================================
 # SIDEBAR

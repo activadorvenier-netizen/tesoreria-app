@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, date
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
+from utils.layout import mostrar_sidebar
 
 # ✅ Configurar la página
 st.set_page_config(
@@ -10,6 +11,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+mostrar_sidebar()
 
 # ============================================
 # ENCABEZADO
