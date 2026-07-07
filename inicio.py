@@ -46,7 +46,7 @@ with st.sidebar:
     
     # ✅ Menú lateral en el ORDEN CORRECTO
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
-        st.switch_page("app.py")
+        st.switch_page("inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
         st.switch_page("pages/2_💰_Cierre_Caja.py")
@@ -65,8 +65,6 @@ with st.sidebar:
     
     if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
         st.switch_page("pages/7_⚙️_Administracion.py")
-    
-    st.divider()
     
     # Enlace a ChessERP
     st.markdown("""
@@ -92,8 +90,6 @@ with st.sidebar:
         </a>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.divider()
     
     st.caption("By Pato Frangi")
 
