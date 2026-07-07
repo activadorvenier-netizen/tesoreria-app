@@ -521,12 +521,12 @@ for tab, empresa in zip(tabs, empresas):
         # ==========================================
         # TABLERO DE CONTROL (SOLO VIGENTES)
         # ==========================================
-        
+
         st.subheader("📊 Tablero de Control - Créditos Vigentes")
-        
+
         df_creditos_all = obtener_creditos()
         df_amort_all = obtener_amortizacion()
-        
+
         if not df_creditos_all.empty:
             
             df_creditos_emp = df_creditos_all[df_creditos_all["Empresa"] == empresa]
@@ -547,14 +547,27 @@ for tab, empresa in zip(tabs, empresas):
                 montos = [limpiar_numero(m) for m in df_vigentes["Monto"]]
                 monto_total = sum(montos)
                 
+                # ✅ Calcular correctamente
                 saldo_total = 0
+                total_pagado = 0
+                total_a_pagar = 0
+                
                 for _, credito in df_vigentes.iterrows():
                     df_amort_cred = df_amort_all[df_amort_all["ID Credito"] == credito["ID"]]
                     if not df_amort_cred.empty:
+                        # Total de todas las cuotas (capital + intereses)
+                        total_a_pagar += df_amort_cred["Cuota"].sum()
+                        
+                        # Cuotas pagadas
+                        cuotas_pagadas = df_amort_cred[df_amort_cred.get("Pagada", "NO") == "SI"]
+                        total_pagado += cuotas_pagadas["Cuota"].sum() if not cuotas_pagadas.empty else 0
+                        
+                        # Saldo = cuotas pendientes
                         cuotas_pendientes = df_amort_cred[df_amort_cred.get("Pagada", "NO") != "SI"]
                         saldo_total += cuotas_pendientes["Cuota"].sum() if not cuotas_pendientes.empty else 0
                 
-                pct_pagado = ((monto_total - saldo_total) / monto_total * 100) if monto_total > 0 else 0
+                # ✅ % Pagado = Total Pagado / Total a Pagar
+                pct_pagado = (total_pagado / total_a_pagar * 100) if total_a_pagar > 0 else 0
                 
                 col1, col2 = st.columns(2)
                 
@@ -922,37 +935,39 @@ for tab, empresa in zip(tabs, empresas):
                                         st.session_state.eliminar_credito = fila["ID"]
                                         st.rerun()
                         
-                        # TARJETA INFERIOR - AMORTIZACIÓN (SIN SALDO)
+                        # TARJETA INFERIOR - AMORTIZACIÓN
                         st.subheader("📋 Detalle de Amortización")
-                        
+
                         if not df_amort_cred.empty:
                             
-                            # ✅ Calcular saldo en tiempo real desde cuotas pendientes
+                            # ✅ Calcular correctamente
                             if "Pagada" not in df_amort_cred.columns:
                                 df_amort_cred["Pagada"] = "NO"
                             
                             cuotas_pagadas_df = df_amort_cred[df_amort_cred["Pagada"] == "SI"]
                             cuotas_pendientes_df = df_amort_cred[df_amort_cred["Pagada"] != "SI"]
                             
+                            # Total a Pagar = TODAS las cuotas (capital + intereses)
+                            total_a_pagar = df_amort_cred["Cuota"].sum()
+                            
+                            # Total Pagado = cuotas pagadas
                             total_pagado = cuotas_pagadas_df["Cuota"].sum() if not cuotas_pagadas_df.empty else 0
+                            
+                            # Saldo Actual = cuotas pendientes
                             saldo_actual = cuotas_pendientes_df["Cuota"].sum() if not cuotas_pendientes_df.empty else 0
-                            total_a_pagar = total_pagado + saldo_actual
+                            
+                            # ✅ % Pagado = Total Pagado / Total a Pagar
+                            pct = (total_pagado / total_a_pagar * 100) if total_a_pagar > 0 else 0
                             
                             col1, col2, col3, col4 = st.columns([1.5, 1, 1, 1])
                             
                             with col1:
                                 st.metric("💰 Saldo Actual", formato_moneda(saldo_actual))
-                                if total_a_pagar > 0:
-                                    pct = max(0, min(100, (total_pagado / total_a_pagar * 100)))
-                                    st.progress(min(pct/100, 1.0))
-                                    st.caption(f"Pagado: {pct:.1f}%")
+                                st.progress(min(pct/100, 1.0))
+                                st.caption(f"Pagado: {pct:.1f}%")
                             
                             with col2:
-                                if total_a_pagar > 0:
-                                    pct_mostrar = max(0, min(100, (total_pagado / total_a_pagar * 100)))
-                                else:
-                                    pct_mostrar = 0
-                                st.metric("📈 % Pagado", f"{pct_mostrar:.1f}%")
+                                st.metric("📈 % Pagado", f"{pct:.1f}%")
                             
                             with col3:
                                 st.metric("⏳ Cuotas Pendientes", len(cuotas_pendientes_df))
@@ -961,6 +976,8 @@ for tab, empresa in zip(tabs, empresas):
                                 st.metric("✅ Cuotas Pagadas", len(cuotas_pagadas_df))
                             
                             st.divider()
+                            
+                            # ... resto del código ...
                             
                             # Listado de todas las cuotas
                             df_amort_ordenado = df_amort_cred.sort_values("Fecha", ascending=True)

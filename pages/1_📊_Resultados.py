@@ -309,7 +309,7 @@ for empresa in empresas:
 
 patrimonio_total = total_caja + total_bancos
 
-st.subheader("📊 Resumen Ejecutivo")
+st.subheader("📊 Resumen Total Empresas")
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
