@@ -4,11 +4,18 @@ from datetime import datetime, date
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
 
+# ✅ Configurar la página
 st.set_page_config(
     page_title="Tesorería - Resultados",
     page_icon="💰",
     layout="wide"
 )
+
+# ✅ LIMPIAR CACHÉ AL INICIO DE LA APLICACIÓN
+# Usamos un flag en session_state para que solo se ejecute una vez por sesión
+if "cache_limpiado" not in st.session_state:
+    st.cache_data.clear()
+    st.session_state.cache_limpiado = True
 
 # ============================================
 # SIDEBAR
@@ -20,7 +27,8 @@ with st.sidebar:
         use_container_width=True
     )
     
-    # ✅ CSS para ocultar "app", menú automático y colorear Resultados
+    st.divider()
+    
     st.markdown("""
     <style>
         .st-emotion-cache-1wivap2 {
@@ -32,7 +40,6 @@ with st.sidebar:
         [data-testid="stFooter"] {
             display: none !important;
         }
-        /* ✅ Resultados en VERDE */
         button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
             background-color: #2e7d32 !important;
             color: white !important;
@@ -44,29 +51,29 @@ with st.sidebar:
     </style>
     """, unsafe_allow_html=True)
     
-    # ✅ Menú lateral en el ORDEN CORRECTO
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
-        st.switch_page("inicio.py")
+        st.switch_page("Inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
-        st.switch_page("pages/2_💰_Cierre_Caja.py")
+        st.switch_page("pages/5_💰_Cierre_Caja.py")
     
     if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
         st.switch_page("pages/3_🏦_Bancos.py")
     
     if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
-        st.switch_page("pages/4_📈_Plazos_Fijos.py")
+        st.switch_page("pages/6_📈_Plazos_Fijos.py")
     
     if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
-        st.switch_page("pages/5_📊_Creditos.py")
+        st.switch_page("pages/8_📊_Creditos.py")
     
     if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
-        st.switch_page("pages/6_🍺_Quilmes.py")
+        st.switch_page("pages/4_🍺_Quilmes.py")
     
     if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
         st.switch_page("pages/7_⚙️_Administracion.py")
     
-    # Enlace a ChessERP
+    st.divider()
+    
     st.markdown("""
     <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
         <a href="https://venier.chesserp.com/AR173/#/dashboard" 
@@ -91,10 +98,12 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
+    st.divider()
+    
     st.caption("By Pato Frangi")
 
 # ============================================
-# CONTENIDO PRINCIPAL - RESULTADOS
+# ENCABEZADO
 # ============================================
 
 col1, col2 = st.columns([3,1])
@@ -189,25 +198,44 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         (bancos["Fecha"] <= fecha_consulta)
     ].copy()
 
-    galicia = 0
-    macro = 0
-    credicoop = 0
-    santander = 0
+    galicia_saldo = 0
+    galicia_fci = 0
+    macro_saldo = 0
+    macro_fci = 0
+    credicoop_saldo = 0
+    credicoop_fci = 0
+    santander_saldo = 0
+    santander_fci = 0
+    otros_bancos = {}
 
     if not bancos_emp.empty:
         bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
         ultimo = bancos_emp.iloc[0]
 
-        galicia = float(ultimo["GaliciaSaldo"]) + float(ultimo["GaliciaFCI"])
-        macro = float(ultimo["MacroSaldo"]) + float(ultimo["MacroFCI"])
-        credicoop = float(ultimo["CredicoopSaldo"]) + float(ultimo["CredicoopFCI"])
-        santander = float(ultimo["SantanderSaldo"]) + float(ultimo["SantanderFCI"])
+        galicia_saldo = float(ultimo["GaliciaSaldo"])
+        galicia_fci = float(ultimo["GaliciaFCI"])
+        macro_saldo = float(ultimo["MacroSaldo"])
+        macro_fci = float(ultimo["MacroFCI"])
+        credicoop_saldo = float(ultimo["CredicoopSaldo"])
+        credicoop_fci = float(ultimo["CredicoopFCI"])
+        santander_saldo = float(ultimo["SantanderSaldo"])
+        santander_fci = float(ultimo["SantanderFCI"])
+        
+        for col in ultimo.index:
+            if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
+                nombre = col.replace("Saldo", "")
+                fci_col = f"{nombre}FCI"
+                saldo = float(ultimo[col]) if ultimo[col] else 0
+                fci = float(ultimo[fci_col]) if fci_col in ultimo and ultimo[fci_col] else 0
+                if saldo > 0 or fci > 0:
+                    otros_bancos[nombre] = {"saldo": saldo, "fci": fci}
 
     detalle_pf = pd.DataFrame()
     pf_galicia = 0
     pf_macro = 0
     pf_credicoop = 0
     pf_santander = 0
+    pf_otros = {}
 
     if not plazos_fijos.empty:
         detalle_pf = plazos_fijos[plazos_fijos["Empresa"] == empresa].copy()
@@ -217,19 +245,28 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
+            for banco in detalle_pf["Banco"].unique():
+                if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
+                    pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
 
-    total_bancos = galicia + macro + credicoop + santander
-    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander
+    total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
+    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + sum(pf_otros.values())
 
     return {
-        "galicia": galicia,
-        "macro": macro,
-        "credicoop": credicoop,
-        "santander": santander,
+        "GaliciaSaldo": galicia_saldo,
+        "GaliciaFCI": galicia_fci,
+        "MacroSaldo": macro_saldo,
+        "MacroFCI": macro_fci,
+        "CredicoopSaldo": credicoop_saldo,
+        "CredicoopFCI": credicoop_fci,
+        "SantanderSaldo": santander_saldo,
+        "SantanderFCI": santander_fci,
         "pf_galicia": pf_galicia,
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
+        "otros_bancos": otros_bancos,
+        "pf_otros": pf_otros,
         "total_bancos": total_bancos,
         "total_pf": total_pf,
         "detalle_pf": detalle_pf
@@ -266,6 +303,7 @@ def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
 # CARGA DE DATOS
 # ============================================
 
+# ✅ Siempre cargar datos frescos
 caja = leer_hoja("CierreCaja")
 bancos_df = leer_hoja("Bancos")
 plazos_fijos_df = leer_hoja("PlazosFijos")
@@ -293,6 +331,13 @@ if quilmes.empty:
         "ID", "Fecha", "Empresa", "DeudaPagar", "PromesaNC",
         "ChequesEmitidos", "Depositos", "Efectivo", "NecesidadQuilmes"
     ])
+
+# ============================================
+# VALIDACIONES
+# ============================================
+
+if caja.empty:
+    st.warning("No existe ningún Cierre de Caja cargado.")
 
 # ============================================
 # FECHAS
@@ -406,7 +451,10 @@ for tab, empresa in zip(tabs, empresas):
             mostrar_tarjeta_bancos(empresa, bancos_empresa)
             mostrar_tarjeta_pf(bancos_empresa["detalle_pf"])
 
-            # Resumen de créditos
+            # ============================================
+            # RESUMEN DE CRÉDITOS - CUOTAS DEL MES
+            # ============================================
+            
             st.divider()
             st.subheader("📊 Resumen de Créditos - Cuotas del Mes")
             
@@ -462,7 +510,10 @@ for tab, empresa in zip(tabs, empresas):
             else:
                 st.info("📭 No hay créditos o cuotas registradas aún.")
 
-        # Quilmes
+        # ============================================
+        # QUILMES
+        # ============================================
+
         with st.container(border=True):
             st.markdown("### 🍺 Quilmes")
             
