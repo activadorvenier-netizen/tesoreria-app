@@ -50,6 +50,13 @@ col_fecha, _ = st.columns([1,3])
 with col_fecha:
     fecha_consulta = st.date_input("📅 Fecha", value=date.today())
 
+# ✅ Botón para actualizar datos manualmente
+col_refresh, _ = st.columns([1, 3])
+with col_refresh:
+    if st.button("🔄 Actualizar Datos", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
 # ============================================
 # FUNCIONES
 # ============================================
@@ -126,7 +133,6 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
         ultimo = bancos_emp.iloc[0]
 
-        # Obtener datos de los bancos principales
         galicia_saldo = float(ultimo["GaliciaSaldo"])
         galicia_fci = float(ultimo["GaliciaFCI"])
         macro_saldo = float(ultimo["MacroSaldo"])
@@ -137,16 +143,13 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         santander_fci = float(ultimo["SantanderFCI"])
         
         # ✅ Buscar otros bancos (Provincia, BBVA, ICBC, etc.)
-        # Recorrer todas las columnas del último registro
         for col in ultimo.index:
-            # Si la columna termina en "Saldo" y no es de los bancos principales
             if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
                 nombre = col.replace("Saldo", "")
                 fci_col = f"{nombre}FCI"
                 saldo = float(ultimo[col]) if ultimo[col] else 0
                 fci = float(ultimo[fci_col]) if fci_col in ultimo and ultimo[fci_col] else 0
                 
-                # Solo guardar si tiene algún valor
                 if saldo > 0 or fci > 0:
                     otros_bancos[nombre] = {
                         "saldo": saldo,
@@ -159,7 +162,7 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     pf_macro = 0
     pf_credicoop = 0
     pf_santander = 0
-    pf_otros = {}  # ✅ Plazos fijos de otros bancos
+    pf_otros = {}
 
     if not plazos_fijos.empty:
         detalle_pf = plazos_fijos[plazos_fijos["Empresa"] == empresa].copy()
@@ -170,7 +173,6 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
             
-            # ✅ Buscar plazos fijos de otros bancos
             for banco in detalle_pf["Banco"].unique():
                 if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
                     pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
@@ -178,9 +180,7 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
     total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + sum(pf_otros.values())
 
-    # ✅ RETORNAR TODOS LOS DATOS
     return {
-        # Saldos y FCI por banco
         "GaliciaSaldo": galicia_saldo,
         "GaliciaFCI": galicia_fci,
         "MacroSaldo": macro_saldo,
@@ -189,15 +189,12 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         "CredicoopFCI": credicoop_fci,
         "SantanderSaldo": santander_saldo,
         "SantanderFCI": santander_fci,
-        # Plazos fijos por banco
         "pf_galicia": pf_galicia,
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
-        # ✅ Otros bancos (dinámicos)
         "otros_bancos": otros_bancos,
         "pf_otros": pf_otros,
-        # Totales
         "total_bancos": total_bancos,
         "total_pf": total_pf,
         "detalle_pf": detalle_pf
@@ -231,13 +228,20 @@ def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
     return {"deuda": deuda, "nc": nc, "cobertura": cobertura, "necesidad": necesidad}
 
 # ============================================
-# CARGA DE DATOS
+# CARGA DE DATOS CON CACHÉ
 # ============================================
 
-caja = leer_hoja("CierreCaja")
-bancos_df = leer_hoja("Bancos")
-plazos_fijos_df = leer_hoja("PlazosFijos")
-quilmes = leer_hoja("Quilmes")
+# ✅ Cargar datos con caché que se actualiza cada 5 minutos
+@st.cache_data(ttl=300)
+def cargar_datos():
+    caja = leer_hoja("CierreCaja")
+    bancos_df = leer_hoja("Bancos")
+    plazos_fijos_df = leer_hoja("PlazosFijos")
+    quilmes = leer_hoja("Quilmes")
+    return caja, bancos_df, plazos_fijos_df, quilmes
+
+# Cargar datos
+caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos()
 
 # ============================================
 # VALIDACIÓN DE DATAFRAMES VACÍOS
@@ -309,7 +313,7 @@ for empresa in empresas:
 
 patrimonio_total = total_caja + total_bancos
 
-st.subheader("📊 Resumen Total Empresas")
+st.subheader("📊 Resumen Ejecutivo")
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 

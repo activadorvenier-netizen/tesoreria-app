@@ -618,9 +618,11 @@ for tab, empresa in zip(tabs, empresas):
                 df_cuotas["Mes"] = df_cuotas["Fecha"].dt.strftime("%Y-%m")
                 df_cuotas["Mes_Texto"] = df_cuotas["Fecha"].dt.strftime("%B %Y")
                 
-                # Crear opciones de meses disponibles
+                # ✅ Crear opciones de meses disponibles
                 meses_disponibles = sorted(df_cuotas["Mes"].unique(), reverse=True)
                 opciones_meses = []
+                mes_actual = date.today().strftime("%Y-%m")
+                
                 for mes in meses_disponibles:
                     fecha_temp = datetime.strptime(mes, "%Y-%m")
                     opciones_meses.append({
@@ -628,13 +630,21 @@ for tab, empresa in zip(tabs, empresas):
                         "label": fecha_temp.strftime("%B %Y")
                     })
                 
-                # Selector de mes
+                # ✅ Buscar el índice del mes actual
+                indice_actual = 0
+                for i, mes in enumerate(opciones_meses):
+                    if mes["key"] == mes_actual:
+                        indice_actual = i
+                        break
+                
+                # Selector de mes con el mes actual por defecto
                 col1, col2, col3 = st.columns([2, 1, 2])
                 
                 with col1:
                     mes_seleccionado_key = st.selectbox(
                         "Seleccionar Mes",
                         options=[m["key"] for m in opciones_meses],
+                        index=indice_actual,  # ✅ Mes actual por defecto
                         format_func=lambda x: next(m["label"] for m in opciones_meses if m["key"] == x),
                         key=f"mes_proyeccion_{empresa}"
                     )
