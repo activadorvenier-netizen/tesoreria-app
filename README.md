@@ -24,4 +24,4 @@ Aplicación de gestión de tesorería para el Grupo Venier desarrollada con Stre
 git clone https://github.com/TU-USUARIO/tesoreria-app.git
 cd tesoreria-app
 pip install -r requirements.txt
-streamlit run app.py
+streamlit run inicio.py
