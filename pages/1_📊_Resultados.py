@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
+import time
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
 
@@ -228,20 +229,41 @@ def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
     return {"deuda": deuda, "nc": nc, "cobertura": cobertura, "necesidad": necesidad}
 
 # ============================================
-# CARGA DE DATOS CON CACHÉ
+# CARGA DE DATOS CON FORZADO DE ACTUALIZACIÓN
 # ============================================
 
-# ✅ Cargar datos con caché que se actualiza cada 5 minutos
-@st.cache_data(ttl=300)
-def cargar_datos():
+# ✅ Usar un timestamp para forzar la recarga de datos
+@st.cache_data(ttl=0)  # Sin caché - siempre recarga
+def cargar_datos_sin_cache():
     caja = leer_hoja("CierreCaja")
     bancos_df = leer_hoja("Bancos")
     plazos_fijos_df = leer_hoja("PlazosFijos")
     quilmes = leer_hoja("Quilmes")
     return caja, bancos_df, plazos_fijos_df, quilmes
 
-# Cargar datos
-caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos()
+# ✅ Usar caché con tiempo de vida de 5 minutos (más eficiente)
+@st.cache_data(ttl=300)
+def cargar_datos_con_cache():
+    caja = leer_hoja("CierreCaja")
+    bancos_df = leer_hoja("Bancos")
+    plazos_fijos_df = leer_hoja("PlazosFijos")
+    quilmes = leer_hoja("Quilmes")
+    return caja, bancos_df, plazos_fijos_df, quilmes
+
+# ✅ Intentar cargar con caché, si falla, usar sin caché
+try:
+    # Primero intentar con caché
+    caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_con_cache()
+    
+    # Verificar si los datos de bancos están vacíos
+    if bancos_df.empty:
+        # Si están vacíos, forzar recarga sin caché
+        caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_sin_cache()
+        # Limpiar caché para futuras cargas
+        st.cache_data.clear()
+except:
+    # Si hay error, cargar sin caché
+    caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_sin_cache()
 
 # ============================================
 # VALIDACIÓN DE DATAFRAMES VACÍOS
