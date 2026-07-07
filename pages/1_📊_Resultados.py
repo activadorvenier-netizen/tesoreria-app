@@ -1,16 +1,103 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
-import time
 from utils.sheets import leer_hoja
 from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
 
 # ✅ Configurar la página
 st.set_page_config(
     page_title="Tesorería - Resultados",
-    page_icon="📊",
+    page_icon="💰",
     layout="wide"
 )
+
+# ✅ LIMPIAR CACHÉ AUTOMÁTICAMENTE AL CARGAR LA PÁGINA
+st.cache_data.clear()
+
+# ============================================
+# SIDEBAR
+# ============================================
+
+with st.sidebar:
+    st.image(
+        "assets/logo_grupo_venier.png",
+        use_container_width=True
+    )
+    
+    st.divider()
+    
+    st.markdown("""
+    <style>
+        .st-emotion-cache-1wivap2 {
+            display: none !important;
+        }
+        [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        [data-testid="stFooter"] {
+            display: none !important;
+        }
+        button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
+            background-color: #2e7d32 !important;
+            color: white !important;
+            font-weight: 600 !important;
+        }
+        button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"]:hover {
+            background-color: #1b5e20 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
+        st.switch_page("Inicio.py")
+    
+    if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
+        st.switch_page("pages/5_💰_Cierre_Caja.py")
+    
+    if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
+        st.switch_page("pages/3_🏦_Bancos.py")
+    
+    if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
+        st.switch_page("pages/6_📈_Plazos_Fijos.py")
+    
+    if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
+        st.switch_page("pages/8_📊_Creditos.py")
+    
+    if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
+        st.switch_page("pages/4_🍺_Quilmes.py")
+    
+    if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
+        st.switch_page("pages/7_⚙️_Administracion.py")
+    
+    st.divider()
+    
+    st.markdown("""
+    <div style="text-align: center; padding: 5px 0; margin-bottom: 5px;">
+        <a href="https://venier.chesserp.com/AR173/#/dashboard" 
+           target="_blank" 
+           style="
+               display: inline-block;
+               background-color: #1f77b4;
+               color: white;
+               padding: 8px 16px;
+               text-decoration: none;
+               border-radius: 6px;
+               font-weight: 500;
+               font-size: 13px;
+               transition: all 0.3s;
+               width: 100%;
+               text-align: center;
+           "
+           onmouseover="this.style.backgroundColor='#145a8a'"
+           onmouseout="this.style.backgroundColor='#1f77b4'">
+           🔗 Ir a ChessERP
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    st.caption("By Pato Frangi")
 
 # ============================================
 # ENCABEZADO
@@ -31,11 +118,9 @@ with col2:
 
 st.markdown("""
 <style>
-/* Valor principal del metric */
 [data-testid="stMetricValue"] {
     font-size: 1.4rem !important;
 }
-/* Título del metric */
 [data-testid="stMetricLabel"] {
     font-size: 0.9rem !important;
 }
@@ -50,13 +135,6 @@ col_fecha, _ = st.columns([1,3])
 
 with col_fecha:
     fecha_consulta = st.date_input("📅 Fecha", value=date.today())
-
-# ✅ Botón para actualizar datos manualmente
-col_refresh, _ = st.columns([1, 3])
-with col_refresh:
-    if st.button("🔄 Actualizar Datos", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
 
 # ============================================
 # FUNCIONES
@@ -117,7 +195,6 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         (bancos["Fecha"] <= fecha_consulta)
     ].copy()
 
-    # Inicializar todos los valores
     galicia_saldo = 0
     galicia_fci = 0
     macro_saldo = 0
@@ -126,8 +203,6 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     credicoop_fci = 0
     santander_saldo = 0
     santander_fci = 0
-    
-    # Diccionario para otros bancos
     otros_bancos = {}
 
     if not bancos_emp.empty:
@@ -143,21 +218,15 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         santander_saldo = float(ultimo["SantanderSaldo"])
         santander_fci = float(ultimo["SantanderFCI"])
         
-        # ✅ Buscar otros bancos (Provincia, BBVA, ICBC, etc.)
         for col in ultimo.index:
             if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
                 nombre = col.replace("Saldo", "")
                 fci_col = f"{nombre}FCI"
                 saldo = float(ultimo[col]) if ultimo[col] else 0
                 fci = float(ultimo[fci_col]) if fci_col in ultimo and ultimo[fci_col] else 0
-                
                 if saldo > 0 or fci > 0:
-                    otros_bancos[nombre] = {
-                        "saldo": saldo,
-                        "fci": fci
-                    }
+                    otros_bancos[nombre] = {"saldo": saldo, "fci": fci}
 
-    # Obtener plazos fijos de la empresa
     detalle_pf = pd.DataFrame()
     pf_galicia = 0
     pf_macro = 0
@@ -173,7 +242,6 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
-            
             for banco in detalle_pf["Banco"].unique():
                 if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
                     pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
@@ -229,41 +297,13 @@ def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
     return {"deuda": deuda, "nc": nc, "cobertura": cobertura, "necesidad": necesidad}
 
 # ============================================
-# CARGA DE DATOS CON FORZADO DE ACTUALIZACIÓN
+# CARGA DE DATOS
 # ============================================
 
-# ✅ Usar un timestamp para forzar la recarga de datos
-@st.cache_data(ttl=0)  # Sin caché - siempre recarga
-def cargar_datos_sin_cache():
-    caja = leer_hoja("CierreCaja")
-    bancos_df = leer_hoja("Bancos")
-    plazos_fijos_df = leer_hoja("PlazosFijos")
-    quilmes = leer_hoja("Quilmes")
-    return caja, bancos_df, plazos_fijos_df, quilmes
-
-# ✅ Usar caché con tiempo de vida de 5 minutos (más eficiente)
-@st.cache_data(ttl=300)
-def cargar_datos_con_cache():
-    caja = leer_hoja("CierreCaja")
-    bancos_df = leer_hoja("Bancos")
-    plazos_fijos_df = leer_hoja("PlazosFijos")
-    quilmes = leer_hoja("Quilmes")
-    return caja, bancos_df, plazos_fijos_df, quilmes
-
-# ✅ Intentar cargar con caché, si falla, usar sin caché
-try:
-    # Primero intentar con caché
-    caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_con_cache()
-    
-    # Verificar si los datos de bancos están vacíos
-    if bancos_df.empty:
-        # Si están vacíos, forzar recarga sin caché
-        caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_sin_cache()
-        # Limpiar caché para futuras cargas
-        st.cache_data.clear()
-except:
-    # Si hay error, cargar sin caché
-    caja, bancos_df, plazos_fijos_df, quilmes = cargar_datos_sin_cache()
+caja = leer_hoja("CierreCaja")
+bancos_df = leer_hoja("Bancos")
+plazos_fijos_df = leer_hoja("PlazosFijos")
+quilmes = leer_hoja("Quilmes")
 
 # ============================================
 # VALIDACIÓN DE DATAFRAMES VACÍOS
