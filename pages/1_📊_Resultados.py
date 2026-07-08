@@ -52,19 +52,19 @@ with st.sidebar:
         st.switch_page("Inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
-        st.switch_page("pages/5_💰_Cierre_Caja.py")
+        st.switch_page("pages/2_💰_Cierre_Caja.py")
     
     if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
         st.switch_page("pages/3_🏦_Bancos.py")
     
     if st.button("📈 Plazos Fijos", key="menu_pf", use_container_width=True):
-        st.switch_page("pages/6_📈_Plazos_Fijos.py")
+        st.switch_page("pages/4_📈_Plazos_Fijos.py")
     
     if st.button("📊 Créditos", key="menu_creditos", use_container_width=True):
-        st.switch_page("pages/8_📊_Creditos.py")
+        st.switch_page("pages/5_📊_Creditos.py")
     
     if st.button("🍺 Quilmes", key="menu_quilmes", use_container_width=True):
-        st.switch_page("pages/4_🍺_Quilmes.py")
+        st.switch_page("pages/6_🍺_Quilmes.py")
     
     if st.button("⚙️ Administración", key="menu_admin", use_container_width=True):
         st.switch_page("pages/7_⚙️_Administracion.py")
