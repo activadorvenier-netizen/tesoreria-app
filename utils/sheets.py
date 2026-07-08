@@ -295,12 +295,13 @@ def actualizar_cierre_caja(
 ):
     """
     Actualiza un registro de Cierre de Caja existente
-    La hoja CierreCaja debe tener las columnas:
-    ID, Fecha, Empresa, Efectivo, Cheques, Echeq
     """
     hoja = obtener_hoja("CierreCaja")
     
     registros = hoja.get_all_records()
+    
+    # ✅ Convertir fecha a string
+    fecha_str = fecha.strftime("%Y-%m-%d") if hasattr(fecha, 'strftime') else str(fecha)
     
     for i, fila in enumerate(registros, start=2):
         if str(fila["ID"]) == str(id_caja):
@@ -308,7 +309,7 @@ def actualizar_cierre_caja(
                 f"A{i}:F{i}",
                 [[
                     id_caja,
-                    fecha,
+                    fecha_str,  # ✅ Usar fecha_str
                     empresa,
                     efectivo,
                     cheques,
@@ -347,20 +348,20 @@ def guardar_cierre_caja(
     registros = hoja.get_all_records()
 
     if registros:
-
         ultimo_id = max(
             int(f["ID"])
             for f in registros
             if str(f["ID"]).strip() != ""
         ) + 1
-
     else:
-
         ultimo_id = 1
+
+    # ✅ Convertir fecha a string
+    fecha_str = fecha.strftime("%Y-%m-%d") if hasattr(fecha, 'strftime') else str(fecha)
 
     hoja.append_row([
         ultimo_id,
-        fecha,
+        fecha_str,
         empresa,
         efectivo,
         cheques,
