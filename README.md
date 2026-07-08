@@ -4,12 +4,12 @@ Aplicación de gestión de tesorería para el Grupo Venier desarrollada con Stre
 
 ## 📋 Funcionalidades
 
-- 📊 **Resultados**: Resumen ejecutivo de la situación financiera
-- 🏦 **Bancos**: Gestión de posición bancaria
-- 🍺 **Quilmes**: Gestión de deuda Quilmes
+- 📊 **Resultados**: Resumen Total Empresas de la situación financiera
 - 💰 **Cierre de Caja**: Cierres diarios por empresa
+- 🏦 **Bancos**: Gestión de posición bancaria
 - 📈 **Plazos Fijos**: Gestión de inversiones
 - 📊 **Créditos**: Gestión de créditos y amortizaciones
+- 🍺 **Quilmes**: Gestión de deuda Quilmes
 - ⚙️ **Administración**: Configuración de empresas y bancos
 
 ## 🚀 Tecnologías
