@@ -55,7 +55,7 @@ with st.sidebar:
         st.switch_page("Inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
-        st.switch_page("pages/2_💰_Cierre_Caja.py")
+        st.switch_page("pages/2 _💰_Cierre_Caja.py")
     
     if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
         st.switch_page("pages/3_🏦_Bancos.py")
@@ -379,7 +379,7 @@ for empresa in empresas:
 
 patrimonio_total = total_caja + total_bancos
 
-st.subheader("📊 Resumen Ejecutivo")
+st.subheader("📊 Resumen Total Empresas")
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
