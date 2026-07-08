@@ -987,8 +987,6 @@ for tab, empresa in zip(tabs, empresas):
                             
                             st.divider()
                             
-                            # ... resto del código ...
-                            
                             # Listado de todas las cuotas
                             df_amort_ordenado = df_amort_cred.sort_values("Fecha", ascending=True)
                             
@@ -1020,7 +1018,10 @@ for tab, empresa in zip(tabs, empresas):
                                                 if r["ID Credito"] == fila["ID"] and r["Fecha"] == fecha_cuota:
                                                     hoja_amortizacion.update(f"D{i}", [["SI"]])
                                                     break
+                                            # ✅ Limpiar caché para que se actualice en Resultados
                                             limpiar_cache_creditos()
+                                            # ✅ Limpiar caché de leer_hoja() (necesario para Resultados)
+                                            limpiar_cache()
                                             st.rerun()
                         else:
                             st.info("No hay datos de amortización para este crédito")
