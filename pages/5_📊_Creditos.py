@@ -945,7 +945,7 @@ for tab, empresa in zip(tabs, empresas):
                                         st.session_state.eliminar_credito = fila["ID"]
                                         st.rerun()
                         
-                        # TARJETA INFERIOR - AMORTIZACIÓN
+                        # TARJETA INFERIOR - AMORTIZACIÓN (CON DESMARCAR PAGO)
                         st.subheader("📋 Detalle de Amortización")
 
                         if not df_amort_cred.empty:
@@ -987,7 +987,7 @@ for tab, empresa in zip(tabs, empresas):
                             
                             st.divider()
                             
-                            # Listado de todas las cuotas
+                            # Listado de todas las cuotas (CON BOTÓN DE DESMARCAR)
                             df_amort_ordenado = df_amort_cred.sort_values("Fecha", ascending=True)
                             
                             st.markdown("**📅 Todas las Cuotas**")
@@ -1011,16 +1011,29 @@ for tab, empresa in zip(tabs, empresas):
                                         st.warning("⏳ Pendiente")
                                 
                                 with col4:
-                                    if not esta_pagada:
+                                    # ✅ Botón para pagar o desmarcar pago
+                                    if esta_pagada:
+                                        # Si está pagada, mostrar botón para desmarcar (↩️)
+                                        if st.button("↩️", key=f"despagar_{idx}_{fila['ID']}"):
+                                            registros_amort = hoja_amortizacion.get_all_records()
+                                            for i, r in enumerate(registros_amort, start=2):
+                                                if r["ID Credito"] == fila["ID"] and r["Fecha"] == fecha_cuota:
+                                                    hoja_amortizacion.update(f"D{i}", [["NO"]])
+                                                    break
+                                            # ✅ Limpiar caché
+                                            limpiar_cache_creditos()
+                                            limpiar_cache()
+                                            st.rerun()
+                                    else:
+                                        # Si no está pagada, mostrar botón para pagar
                                         if st.button("💵 Pagar", key=f"pagar_{idx}_{fila['ID']}"):
                                             registros_amort = hoja_amortizacion.get_all_records()
                                             for i, r in enumerate(registros_amort, start=2):
                                                 if r["ID Credito"] == fila["ID"] and r["Fecha"] == fecha_cuota:
                                                     hoja_amortizacion.update(f"D{i}", [["SI"]])
                                                     break
-                                            # ✅ Limpiar caché para que se actualice en Resultados
+                                            # ✅ Limpiar caché
                                             limpiar_cache_creditos()
-                                            # ✅ Limpiar caché de leer_hoja() (necesario para Resultados)
                                             limpiar_cache()
                                             st.rerun()
                         else:

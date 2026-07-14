@@ -49,7 +49,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
-        st.switch_page("Inicio.py")
+        st.switch_page("inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
         st.switch_page("pages/2_💰_Cierre_Caja.py")
