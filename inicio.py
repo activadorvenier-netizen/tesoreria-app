@@ -55,7 +55,7 @@ with st.sidebar:
         st.switch_page("inicio.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
-        st.switch_page("pages/2 _💰_Cierre_Caja.py")
+        st.switch_page("pages/2_💰_Cierre_Caja.py")
     
     if st.button("🏦 Bancos", key="menu_bancos", use_container_width=True):
         st.switch_page("pages/3_🏦_Bancos.py")
