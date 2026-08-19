@@ -366,6 +366,7 @@ if "Venier" in empresas:
 
 total_caja = 0
 total_bancos = 0
+total_pf = 0
 total_necesidad = 0
 
 for empresa in empresas:
@@ -375,13 +376,14 @@ for empresa in empresas:
 
     total_caja += saldos["total"]
     total_bancos += bancos_empresa["total_bancos"]
+    total_pf += bancos_empresa["total_pf"]
     total_necesidad += quilmes_empresa["necesidad"]
 
-patrimonio_total = total_caja + total_bancos
+patrimonio_total = total_caja + total_bancos + total_pf
 
 st.subheader("📊 Resumen Total Empresas")
 
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
 
 with kpi1:
     st.metric("💵 Caja Total", formato_moneda(total_caja))
@@ -390,9 +392,12 @@ with kpi2:
     st.metric("🏦 Bancos", formato_moneda(total_bancos))
 
 with kpi3:
-    st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
+    st.metric("📈 Plazos Fijos", formato_moneda(total_pf))
 
 with kpi4:
+    st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
+
+with kpi5:
     st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
 
 # ============================================
