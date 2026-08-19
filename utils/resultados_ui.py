@@ -44,12 +44,13 @@ def mostrar_tarjeta_bancos(empresa, bancos_empresa):
         total_disponible = 0
         total_pf = 0
 
-        # ✅ Mostrar bancos principales
+        # ✅ Mostrar bancos principales (AGREGADO BBVA)
         bancos = [
             {"nombre": "Galicia", "saldo": "GaliciaSaldo", "fci": "GaliciaFCI", "pf": "pf_galicia"},
             {"nombre": "Macro", "saldo": "MacroSaldo", "fci": "MacroFCI", "pf": "pf_macro"},
             {"nombre": "Credicoop", "saldo": "CredicoopSaldo", "fci": "CredicoopFCI", "pf": "pf_credicoop"},
             {"nombre": "Santander", "saldo": "SantanderSaldo", "fci": "SantanderFCI", "pf": "pf_santander"},
+            {"nombre": "BBVA", "saldo": "BBVASaldo", "fci": "BBVAFCI", "pf": "pf_bbva"},  # ✅ NUEVO
         ]
 
         for banco in bancos:
