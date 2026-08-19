@@ -206,6 +206,8 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     credicoop_fci = 0
     santander_saldo = 0
     santander_fci = 0
+    bbva_saldo = 0
+    bbva_fci = 0
     otros_bancos = {}
 
     if not bancos_emp.empty:
@@ -220,9 +222,11 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         credicoop_fci = float(ultimo["CredicoopFCI"])
         santander_saldo = float(ultimo["SantanderSaldo"])
         santander_fci = float(ultimo["SantanderFCI"])
+        bbva_saldo = float(ultimo["BBVASaldo"]) if "BBVASaldo" in ultimo else 0
+        bbva_fci = float(ultimo["BBVAFCI"]) if "BBVAFCI" in ultimo else 0
         
         for col in ultimo.index:
-            if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
+            if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo", "BBVASaldo"]:
                 nombre = col.replace("Saldo", "")
                 fci_col = f"{nombre}FCI"
                 saldo = float(ultimo[col]) if ultimo[col] else 0
@@ -235,6 +239,7 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
     pf_macro = 0
     pf_credicoop = 0
     pf_santander = 0
+    pf_bbva = 0
     pf_otros = {}
 
     if not plazos_fijos.empty:
@@ -245,12 +250,13 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
             pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
             pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
             pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
+            pf_bbva = detalle_pf.loc[detalle_pf["Banco"] == "BBVA", "Capital"].sum()
             for banco in detalle_pf["Banco"].unique():
-                if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
+                if banco not in ["Galicia", "Macro", "Credicoop", "Santander", "BBVA"]:
                     pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
 
-    total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
-    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + sum(pf_otros.values())
+    total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci + bbva_saldo + bbva_fci
+    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + pf_bbva + sum(pf_otros.values())
 
     return {
         "GaliciaSaldo": galicia_saldo,
@@ -261,10 +267,13 @@ def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
         "CredicoopFCI": credicoop_fci,
         "SantanderSaldo": santander_saldo,
         "SantanderFCI": santander_fci,
+        "BBVASaldo": bbva_saldo,
+        "BBVAFCI": bbva_fci,
         "pf_galicia": pf_galicia,
         "pf_macro": pf_macro,
         "pf_credicoop": pf_credicoop,
         "pf_santander": pf_santander,
+        "pf_bbva": pf_bbva,
         "otros_bancos": otros_bancos,
         "pf_otros": pf_otros,
         "total_bancos": total_bancos,
@@ -318,9 +327,12 @@ if caja.empty:
 
 if bancos_df.empty:
     bancos_df = pd.DataFrame(columns=[
-        "ID", "Fecha", "Empresa", "GaliciaSaldo", "GaliciaFCI",
-        "MacroSaldo", "MacroFCI", "CredicoopSaldo", "CredicoopFCI",
-        "SantanderSaldo", "SantanderFCI"
+        "ID", "Fecha", "Empresa", 
+        "GaliciaSaldo", "GaliciaFCI",
+        "MacroSaldo", "MacroFCI", 
+        "CredicoopSaldo", "CredicoopFCI",
+        "SantanderSaldo", "SantanderFCI",
+        "BBVASaldo", "BBVAFCI"
     ])
 
 if plazos_fijos_df.empty:
