@@ -62,7 +62,9 @@ def actualizar_banco(
     credicoop_saldo,
     credicoop_fci,
     santander_saldo,
-    santander_fci
+    santander_fci,
+    bbva_saldo,
+    bbva_fci
 ):
 
     hoja = obtener_hoja("Bancos")
@@ -74,7 +76,7 @@ def actualizar_banco(
         if fila["ID"] == id_banco:
 
             hoja.update(
-                f"A{i}:K{i}",
+                f"A{i}:M{i}",
                 [[
                     id_banco,
                     fecha,
@@ -86,7 +88,9 @@ def actualizar_banco(
                     credicoop_saldo,
                     credicoop_fci,
                     santander_saldo,
-                    santander_fci
+                    santander_fci,
+                    bbva_saldo,
+                    bbva_fci
                 ]]
             )
 
