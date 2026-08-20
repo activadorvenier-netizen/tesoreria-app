@@ -145,6 +145,12 @@ for tab, empresa in zip(tabs_bancos, empresas):
                         value="",
                         key=f"{empresa}_ss"
                     )
+                    # ✅ BBVA Saldo
+                    bbva_saldo = st.text_input(
+                        "BBVA Saldo",
+                        value="",
+                        key=f"{empresa}_bs"
+                    )
                 
                 with col2:
                     galicia_fci = st.text_input(
@@ -167,6 +173,12 @@ for tab, empresa in zip(tabs_bancos, empresas):
                         value="",
                         key=f"{empresa}_sf"
                     )
+                    # ✅ BBVA FCI
+                    bbva_fci = st.text_input(
+                        "BBVA FCI",
+                        value="",
+                        key=f"{empresa}_bf"
+                    )
                 
                 if st.form_submit_button("💾 Guardar Bancos", type="primary", use_container_width=True):
                     nuevo_id = "B" + datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -182,7 +194,10 @@ for tab, empresa in zip(tabs_bancos, empresas):
                         convertir_importe(st.session_state[f"{empresa}_cs"]),
                         convertir_importe(st.session_state[f"{empresa}_cf"]),
                         convertir_importe(st.session_state[f"{empresa}_ss"]),
-                        convertir_importe(st.session_state[f"{empresa}_sf"])
+                        convertir_importe(st.session_state[f"{empresa}_sf"]),
+                        # ✅ BBVA
+                        convertir_importe(st.session_state[f"{empresa}_bs"]),
+                        convertir_importe(st.session_state[f"{empresa}_bf"])
                     ])
                     
                     st.session_state["mensaje_bancos"] = f"✅ Posiciones bancarias para {empresa} guardadas correctamente!"
@@ -221,10 +236,11 @@ for tab, empresa in zip(tabs_bancos, empresas):
                                 fila['GaliciaSaldo'] + fila['GaliciaFCI'] +
                                 fila['MacroSaldo'] + fila['MacroFCI'] +
                                 fila['CredicoopSaldo'] + fila['CredicoopFCI'] +
-                                fila['SantanderSaldo'] + fila['SantanderFCI']
+                                fila['SantanderSaldo'] + fila['SantanderFCI'] +
+                                fila['BBVASaldo'] + fila['BBVAFCI']  # ✅ BBVA
                             )
                             
-                            col1, col2, col3, col4, col5 = st.columns([1.5, 1.5, 1.5, 1.5, 0.8])
+                            col1, col2, col3, col4, col5, col6 = st.columns([1.5, 1.3, 1.3, 1.3, 1.3, 0.8])
                             
                             with col1:
                                 st.markdown(f"**📅 {fila['Fecha']}**")
@@ -250,9 +266,16 @@ for tab, empresa in zip(tabs_bancos, empresas):
                                 st.markdown(f"Saldo: {formato_moneda(fila['SantanderSaldo'])}")
                                 st.markdown(f"FCI: {formato_moneda(fila['SantanderFCI'])}")
                                 st.markdown(f"Total: {formato_moneda(fila['SantanderSaldo'] + fila['SantanderFCI'])}")
-                                st.markdown(f"**💰 Total General: {formato_moneda(total_banco)}**")
                             
                             with col5:
+                                # ✅ BBVA
+                                st.markdown(f"**🏦 BBVA**")
+                                st.markdown(f"Saldo: {formato_moneda(fila['BBVASaldo'])}")
+                                st.markdown(f"FCI: {formato_moneda(fila['BBVAFCI'])}")
+                                st.markdown(f"Total: {formato_moneda(fila['BBVASaldo'] + fila['BBVAFCI'])}")
+                                st.markdown(f"**💰 Total General: {formato_moneda(total_banco)}**")
+                            
+                            with col6:
                                 if st.button("✏️", key=f"edit_banco_{fila['ID']}", use_container_width=True):
                                     st.session_state.editando_banco = fila["ID"]
                                     st.rerun()
@@ -317,6 +340,13 @@ for tab, empresa in zip(tabs_bancos, empresas):
                                         step=1000.0,
                                         key=f"ss_edit_{fila['ID']}"
                                     )
+                                    # ✅ BBVA Saldo
+                                    bbva_saldo_edit = st.number_input(
+                                        "BBVA Saldo",
+                                        value=float(fila["BBVASaldo"]),
+                                        step=1000.0,
+                                        key=f"bs_edit_{fila['ID']}"
+                                    )
                                 
                                 with col2:
                                     galicia_fci_edit = st.number_input(
@@ -343,6 +373,13 @@ for tab, empresa in zip(tabs_bancos, empresas):
                                         step=1000.0,
                                         key=f"sf_edit_{fila['ID']}"
                                     )
+                                    # ✅ BBVA FCI
+                                    bbva_fci_edit = st.number_input(
+                                        "BBVA FCI",
+                                        value=float(fila["BBVAFCI"]),
+                                        step=1000.0,
+                                        key=f"bf_edit_{fila['ID']}"
+                                    )
                                 
                                 col_guardar, col_cancelar = st.columns(2)
                                 
@@ -359,7 +396,9 @@ for tab, empresa in zip(tabs_bancos, empresas):
                                             credicoop_saldo_edit,
                                             credicoop_fci_edit,
                                             santander_saldo_edit,
-                                            santander_fci_edit
+                                            santander_fci_edit,
+                                            bbva_saldo_edit,
+                                            bbva_fci_edit
                                         )
                                         st.session_state.editando_banco = None
                                         st.session_state["mensaje_bancos"] = f"✅ Registro bancario para {empresa} actualizado correctamente!"
