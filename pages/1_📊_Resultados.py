@@ -400,31 +400,33 @@ st.subheader("📊 Resumen Total Empresas")
 
 kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
 
-# --- MODIFICACIÓN: Función que genera el HTML del desglose en 3 filas ---
-def obtener_html_desglose(clave):
-    # Genera un bloque HTML con las 3 filas (usando <br> o divs)
-    filas = "".join([f"<div>{emp}: {formato_moneda(totales_por_empresa[emp][clave])}</div>" for emp in empresas])
-    return f"<div class='desglose-empresa'>{filas}</div>"
+def mostrar_desglose(columna, clave):
+    with columna:
+        for emp in empresas:
+            st.markdown(
+                f"<span style='font-size: 0.9rem; color: #777777; line-height: 1.2;'>{emp}: {formato_moneda(totales_por_empresa[emp][clave])}</span>", 
+                unsafe_allow_html=True
+            )
 
 with kpi1:
     st.metric("💵 Caja Total", formato_moneda(total_caja))
-    st.markdown(obtener_html_desglose('caja'), unsafe_allow_html=True)
+    mostrar_desglose(kpi1, 'caja')
 
 with kpi2:
     st.metric("🏦 Bancos", formato_moneda(total_bancos))
-    st.markdown(obtener_html_desglose('bancos'), unsafe_allow_html=True)
+    mostrar_desglose(kpi2, 'bancos')
 
 with kpi3:
     st.metric("📈 Plazos Fijos", formato_moneda(total_pf))
-    st.markdown(obtener_html_desglose('pf'), unsafe_allow_html=True)
+    mostrar_desglose(kpi3, 'pf')
 
 with kpi4:
     st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
-    st.markdown(obtener_html_desglose('patrimonio'), unsafe_allow_html=True)
+    mostrar_desglose(kpi4, 'patrimonio')
 
 with kpi5:
     st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
-    st.markdown(obtener_html_desglose('quilmes'), unsafe_allow_html=True)
+    mostrar_desglose(kpi5, 'quilmes')
 
 # ============================================
 # RESULTADOS POR EMPRESA (TABS)
