@@ -427,7 +427,6 @@ with kpi4:
 with kpi5:
     st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
     st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('quilmes')}</div>", unsafe_allow_html=True)
-# -------------------------------------------------------------------------
 
 # ============================================
 # RESULTADOS POR EMPRESA (TABS)
