@@ -106,7 +106,7 @@ with st.sidebar:
 col1, col2 = st.columns([3,1])
 
 with col1:
-    st.title("📊 Resultados - Prueba2")
+    st.title("📊 Resultados")
 
 with col2:
     st.caption("Actualizado")
@@ -404,7 +404,7 @@ def mostrar_desglose(columna, clave):
     with columna:
         for emp in empresas:
             st.markdown(
-                f"<span style='font-size: 0.9rem; color: #777777; line-height: 1.2;'>{emp}: {formato_moneda(totales_por_empresa[emp][clave])}</span>", 
+                f"<div style='font-size: 0.95rem; color: #777777; line-height: 1.4; margin-bottom: -5px;'>{emp}: {formato_moneda(totales_por_empresa[emp][clave])}</div>", 
                 unsafe_allow_html=True
             )
 
