@@ -405,30 +405,30 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- MODIFICACIÓN: Función para obtener el texto del desglose ---
 def obtener_texto_desglose(clave):
-    # Armamos un solo string con saltos de línea (<br>) entre cada empresa
-    partes = [f"{emp}: {formato_moneda(totales_por_empresa[emp][clave])}" for emp in empresas]
-    return "<br>".join(partes)
+    # Armamos el string con saltos de línea reales (\n)
+    return "\n".join([f"{emp}: {formato_moneda(totales_por_empresa[emp][clave])}" for emp in empresas])
 
 with kpi1:
     st.metric("💵 Caja Total", formato_moneda(total_caja))
-    st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('caja')}</div>", unsafe_allow_html=True)
+    st.caption(obtener_texto_desglose('caja'))
 
 with kpi2:
     st.metric("🏦 Bancos", formato_moneda(total_bancos))
-    st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('bancos')}</div>", unsafe_allow_html=True)
+    st.caption(obtener_texto_desglose('bancos'))
 
 with kpi3:
     st.metric("📈 Plazos Fijos", formato_moneda(total_pf))
-    st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('pf')}</div>", unsafe_allow_html=True)
+    st.caption(obtener_texto_desglose('pf'))
 
 with kpi4:
     st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
-    st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('patrimonio')}</div>", unsafe_allow_html=True)
+    st.caption(obtener_texto_desglose('patrimonio'))
 
 with kpi5:
     st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
-    st.markdown(f"<div class='texto-desglose'>{obtener_texto_desglose('quilmes')}</div>", unsafe_allow_html=True)
+    st.caption(obtener_texto_desglose('quilmes'))
 
 # ============================================
 # RESULTADOS POR EMPRESA (TABS)
