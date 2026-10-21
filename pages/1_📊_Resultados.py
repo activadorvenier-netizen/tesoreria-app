@@ -392,21 +392,22 @@ st.subheader("📊 Resumen Total Empresas")
 
 kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
 
-# --- MODIFICACIÓN: Estilos y función para el texto chico en gris ---
+# --- MODIFICACIÓN: Estilos y función para el desglose en 3 filas ---
 st.markdown("""
 <style>
 .texto-desglose {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: #888888;
-    line-height: 1.2;
+    line-height: 1.4;
     margin-top: -10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 def obtener_texto_desglose(clave):
+    # Armamos un solo string con saltos de línea (<br>) entre cada empresa
     partes = [f"{emp}: {formato_moneda(totales_por_empresa[emp][clave])}" for emp in empresas]
-    return " | ".join(partes)
+    return "<br>".join(partes)
 
 with kpi1:
     st.metric("💵 Caja Total", formato_moneda(total_caja))
