@@ -396,10 +396,11 @@ kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
 st.markdown("""
 <style>
 .texto-desglose {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #888888;
-    line-height: 1.4;
+    line-height: 1.5;
     margin-top: -10px;
+    white-space: pre-wrap; /* ESTO ES LA CLAVE: hace que respete los \n */
 }
 </style>
 """, unsafe_allow_html=True)
