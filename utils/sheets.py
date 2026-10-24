@@ -493,3 +493,50 @@ def eliminar_quilmes_antiguos(fecha_limite):
 
 def obtener_dataframe(nombre_hoja):
     return leer_hoja(nombre_hoja)
+
+# ==========================================
+# NECESIDADES MANUALES (NUEVO)
+# ==========================================
+
+def guardar_necesidad_manual(empresa, concepto, importe):
+    """
+    Guarda o actualiza un importe manual para una empresa y concepto específico.
+    """
+    hoja = obtener_hoja("Necesidades_Manuales")
+    registros = hoja.get_all_records()
+    
+    encontrado = False
+    
+    # Convertimos importe a string para evitar problemas de coma flotante
+    importe_str = str(importe)
+    
+    for i, fila in enumerate(registros, start=2):
+        if str(fila.get("Empresa", "")).strip() == str(empresa).strip() and str(fila.get("Concepto", "")).strip() == str(concepto).strip():
+            # Si existe, actualizamos el importe
+            hoja.update(f"E{i}", [[importe_str]])
+            encontrado = True
+            break
+            
+    if not encontrado:
+        # Si no existe, lo agregamos
+        if registros:
+            try:
+                ultimo_id = max(int(f["ID"]) for f in registros if str(f.get("ID", "")).strip() != "") + 1
+            except:
+                ultimo_id = 1
+        else:
+            ultimo_id = 1
+            
+        from datetime import datetime
+        fecha_str = datetime.now().strftime("%Y-%m-%d")
+        
+        hoja.append_row([
+            ultimo_id,
+            fecha_str,
+            empresa,
+            concepto,
+            importe_str
+        ])
+        
+    limpiar_cache()
+    return True
