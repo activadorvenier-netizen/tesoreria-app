@@ -177,7 +177,7 @@ for emp in empresas:
     total_bancos = 0
     if not bancos_emp.empty:
         u = bancos_emp.iloc[0]
-        total_bancos = sum(float(u.get(col, 0)) for col in u.index if col.endswith("Saldo") or col.endswith("FCI") and not pd.isna(u.get(col, 0)))
+        total_bancos = sum(float(u.get(col, 0)) for col in u.index if (col.endswith("Saldo") or col.endswith("FCI")) and not pd.isna(u.get(col, 0)))
 
     # Plazos Fijos
     pf_emp = plazos_fijos_df[plazos_fijos_df["Empresa"] == emp]
@@ -212,10 +212,10 @@ if df_necesidades.empty:
 valores_manuales = {emp: {concepto: 0.0 for concepto in ["F931", "F2051 IVA", "Sueldos", "Consignaciones"]} for emp in empresas}
 
 for _, row in df_necesidades.iterrows():
-    emp = row["Empresa"]
-    concepto = row["Concepto"]
+    emp = row.get("Empresa")
+    concepto = row.get("Concepto")
     if emp in valores_manuales and concepto in valores_manuales[emp]:
-        valores_manuales[emp][concepto] = limpiar_numero(row["Importe"])
+        valores_manuales[emp][concepto] = limpiar_numero(row.get("Importe", 0))
 
 # ============================================
 # CONSTRUCCIÓN DE LA TABLA (DATA EDITOR)
@@ -232,9 +232,9 @@ for emp in empresas:
     data[emp] = [
         totales_empresa[emp]["caja"],
         totales_empresa[emp]["bancos"],
-        totales_emp[emp]["pf"],
-        totales_emp[emp]["patrimonio"],
-        totales_emp[emp]["quilmes"],
+        totales_empresa[emp]["pf"],
+        totales_empresa[emp]["patrimonio"],
+        totales_empresa[emp]["quilmes"],
         valores_manuales[emp]["F931"],
         valores_manuales[emp]["F2051 IVA"],
         valores_manuales[emp]["Sueldos"],
@@ -252,8 +252,6 @@ column_config = {
 }
 
 # Mostramos el editor. 
-# Nota: Streamlit no permite bloquear celdas individuales, solo columnas enteras.
-# Para que el usuario sepa qué editar, pintamos el fondo o dejamos que edite lo que quiera.
 df_editado = st.data_editor(
     df_tabla,
     column_config=column_config,
@@ -279,13 +277,17 @@ with col_btn:
             if row["Concepto"] in conceptos_editables:
                 for emp in empresas:
                     nuevo_valor = row[emp]
-                    valor_viejo = valores_manuales[emp].get(row["Concepto"].title(), 0) # .title() porque en dict es "Sueldos"
+                    
+                    # Mapeamos el nombre para que coincida con el diccionario
+                    if row["Concepto"] == "SUELDOS": concepto_dict = "Sueldos"
+                    elif row["Concepto"] == "CONSIGNACIONES": concepto_dict = "Consignaciones"
+                    else: concepto_dict = row["Concepto"]
+                    
+                    valor_viejo = valores_manuales[emp].get(concepto_dict, 0)
                     
                     # Si el usuario cambió el número, lo guardamos
                     if nuevo_valor != valor_viejo:
-                        # Mapeamos el nombre del concepto para que coincida exacto con el dict
-                        concepto_guardar = "Sueldos" if row["Concepto"] == "SUELDOS" else ("F931" if row["Concepto"] == "F931" else row["Concepto"].title())
-                        guardar_necesidad_manual(emp, concepto_guardar, nuevo_valor)
+                        guardar_necesidad_manual(emp, concepto_dict, nuevo_valor)
                         cambios_guardados += 1
                         
         if cambios_guardados > 0:
