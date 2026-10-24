@@ -50,6 +50,9 @@ with st.sidebar:
     
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
         st.switch_page("pages/1_📊_Resultados.py")
+
+    if st.button("🏢 Detalle Empresa", key="menu_detalle_empresa", use_container_width=True):
+        st.switch_page("pages/8_🏢_Detalle_Empresa.py")
     
     if st.button("💰 Cierre de Caja", key="menu_cierre", use_container_width=True):
         st.switch_page("pages/2_💰_Cierre_Caja.py")
