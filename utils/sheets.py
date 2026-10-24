@@ -506,19 +506,25 @@ def guardar_necesidad_manual(empresa, concepto, importe):
     registros = hoja.get_all_records()
     
     encontrado = False
-    
-    # Convertimos importe a string para evitar problemas de coma flotante
     importe_str = str(importe)
     
     for i, fila in enumerate(registros, start=2):
-        if str(fila.get("Empresa", "")).strip() == str(empresa).strip() and str(fila.get("Concepto", "")).strip() == str(concepto).strip():
-            # Si existe, actualizamos el importe
-            hoja.update(f"E{i}", [[importe_str]])
-            encontrado = True
-            break
+        concepto_hoja = str(fila.get("Concepto", "")).strip()
+        empresa_hoja = str(fila.get("Empresa", "")).strip()
+        
+        if empresa_hoja == str(empresa).strip():
+            # Lógica especial para "Otros"
+            if concepto.startswith("Otros") and concepto_hoja.startswith("Otros"):
+                hoja.update(f"D{i}:E{i}", [[concepto, importe_str]])
+                encontrado = True
+                break
+            # Lógica para el resto de los conceptos
+            elif concepto_hoja == str(concepto).strip():
+                hoja.update(f"E{i}", [[importe_str]])
+                encontrado = True
+                break
             
     if not encontrado:
-        # Si no existe, lo agregamos
         if registros:
             try:
                 ultimo_id = max(int(f["ID"]) for f in registros if str(f.get("ID", "")).strip() != "") + 1
