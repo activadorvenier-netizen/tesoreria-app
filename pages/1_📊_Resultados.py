@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
-from utils.sheets import leer_hoja
-from utils.resultados_ui import mostrar_tarjeta_bancos, mostrar_tarjeta_pf
+from utils.sheets import leer_hoja, guardar_necesidad_manual
 
 # ✅ Configurar la página
 st.set_page_config(
     page_title="Tesorería - Resultados",
-    page_icon="💰",
+    page_icon="📊",
     layout="wide"
 )
 
@@ -37,20 +36,12 @@ with st.sidebar:
         [data-testid="stFooter"] {
             display: none !important;
         }
-        button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"] {
-            background-color: #2e7d32 !important;
-            color: white !important;
-            font-weight: 600 !important;
-        }
-        button[data-testid="baseButton-secondary"][aria-label="📊 Resultados"]:hover {
-            background-color: #1b5e20 !important;
-        }
     </style>
     """, unsafe_allow_html=True)
     
     if st.button("📊 Resultados", key="menu_resultados", use_container_width=True):
         st.switch_page("pages/1_📊_Resultados.py")
-
+        
     if st.button("🏢 Detalle Empresa", key="menu_detalle_empresa", use_container_width=True):
         st.switch_page("pages/8_🏢_Detalle_Empresa.py")
     
@@ -109,206 +100,42 @@ with st.sidebar:
 col1, col2 = st.columns([3,1])
 
 with col1:
-    st.title("📊 Resultados")
+    st.title("📊 Resultados y Necesidades")
 
 with col2:
     st.caption("Actualizado")
     st.write(datetime.now().strftime("%d/%m/%Y %H:%M"))
 
 # ============================================
-# ESTILOS
-# ============================================
-
-st.markdown("""
-<style>
-[data-testid="stMetricValue"] {
-    font-size: 1.4rem !important;
-}
-[data-testid="stMetricLabel"] {
-    font-size: 0.9rem !important;
-}
-/* Estilo específico para el desglose en gris y más grande */
-.desglose-empresa {
-    font-size: 0.95rem !important;
-    color: #666666 !important;
-    line-height: 1.4 !important;
-    margin-top: -5px !important;
-    margin-bottom: 15px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================
 # FECHA DE CONSULTA
 # ============================================
 
 col_fecha, _ = st.columns([1,3])
-
 with col_fecha:
     fecha_consulta = st.date_input("📅 Fecha", value=date.today())
 
 # ============================================
-# FUNCIONES
+# FUNCIONES AUXILIARES
 # ============================================
 
 def formato_moneda(valor):
     return f"$ {valor:,.0f}".replace(",", ".")
 
-def limpiar_numero_local(valor):
-    if valor is None:
+def limpiar_numero(valor):
+    if valor is None or pd.isna(valor):
         return 0.0
     if isinstance(valor, (int, float)):
         return float(valor)
     if isinstance(valor, str):
-        valor = valor.replace("$", "").strip()
-        if valor == "":
-            return 0.0
-        valor = valor.replace(",", "").replace(".", "")
+        valor = valor.replace("$", "").replace(".", "").replace(",", ".").strip()
         try:
             return float(valor)
         except:
             return 0.0
     return 0.0
 
-def calcular_saldos_empresa(empresa, fecha_consulta, caja):
-    caja_emp = caja[
-        (caja["Empresa"] == empresa) &
-        (caja["Fecha"] <= fecha_consulta)
-    ].copy()
-
-    if caja_emp.empty:
-        return {
-            "efectivo": 0,
-            "cheques": 0,
-            "echeq": 0,
-            "total": 0,
-            "fecha_caja": None
-        }
-
-    caja_emp = caja_emp.sort_values("Fecha", ascending=False)
-    ultimo = caja_emp.iloc[0]
-
-    efectivo = float(ultimo["Efectivo"])
-    cheques = float(ultimo["Cheques"])
-    echeq = float(ultimo["Echeq"])
-
-    return {
-        "efectivo": efectivo,
-        "cheques": cheques,
-        "echeq": echeq,
-        "total": efectivo + cheques + echeq,
-        "fecha_caja": ultimo["Fecha"]
-    }
-
-def calcular_bancos_empresa(empresa, fecha_consulta, bancos, plazos_fijos):
-    bancos_emp = bancos[
-        (bancos["Empresa"] == empresa) &
-        (bancos["Fecha"] <= fecha_consulta)
-    ].copy()
-
-    galicia_saldo = 0
-    galicia_fci = 0
-    macro_saldo = 0
-    macro_fci = 0
-    credicoop_saldo = 0
-    credicoop_fci = 0
-    santander_saldo = 0
-    santander_fci = 0
-    otros_bancos = {}
-
-    if not bancos_emp.empty:
-        bancos_emp = bancos_emp.sort_values("Fecha", ascending=False)
-        ultimo = bancos_emp.iloc[0]
-
-        galicia_saldo = float(ultimo["GaliciaSaldo"])
-        galicia_fci = float(ultimo["GaliciaFCI"])
-        macro_saldo = float(ultimo["MacroSaldo"])
-        macro_fci = float(ultimo["MacroFCI"])
-        credicoop_saldo = float(ultimo["CredicoopSaldo"])
-        credicoop_fci = float(ultimo["CredicoopFCI"])
-        santander_saldo = float(ultimo["SantanderSaldo"])
-        santander_fci = float(ultimo["SantanderFCI"])
-        
-        for col in ultimo.index:
-            if col.endswith("Saldo") and col not in ["GaliciaSaldo", "MacroSaldo", "CredicoopSaldo", "SantanderSaldo"]:
-                nombre = col.replace("Saldo", "")
-                fci_col = f"{nombre}FCI"
-                saldo = float(ultimo[col]) if ultimo[col] else 0
-                fci = float(ultimo[fci_col]) if fci_col in ultimo and ultimo[fci_col] else 0
-                if saldo > 0 or fci > 0:
-                    otros_bancos[nombre] = {"saldo": saldo, "fci": fci}
-
-    detalle_pf = pd.DataFrame()
-    pf_galicia = 0
-    pf_macro = 0
-    pf_credicoop = 0
-    pf_santander = 0
-    pf_otros = {}
-
-    if not plazos_fijos.empty:
-        detalle_pf = plazos_fijos[plazos_fijos["Empresa"] == empresa].copy()
-        if not detalle_pf.empty:
-            detalle_pf["Capital"] = detalle_pf["Capital"].astype(float)
-            pf_galicia = detalle_pf.loc[detalle_pf["Banco"] == "Galicia", "Capital"].sum()
-            pf_macro = detalle_pf.loc[detalle_pf["Banco"] == "Macro", "Capital"].sum()
-            pf_credicoop = detalle_pf.loc[detalle_pf["Banco"] == "Credicoop", "Capital"].sum()
-            pf_santander = detalle_pf.loc[detalle_pf["Banco"] == "Santander", "Capital"].sum()
-            for banco in detalle_pf["Banco"].unique():
-                if banco not in ["Galicia", "Macro", "Credicoop", "Santander"]:
-                    pf_otros[banco] = detalle_pf.loc[detalle_pf["Banco"] == banco, "Capital"].sum()
-
-    total_bancos = galicia_saldo + galicia_fci + macro_saldo + macro_fci + credicoop_saldo + credicoop_fci + santander_saldo + santander_fci
-    total_pf = pf_galicia + pf_macro + pf_credicoop + pf_santander + sum(pf_otros.values())
-
-    return {
-        "GaliciaSaldo": galicia_saldo,
-        "GaliciaFCI": galicia_fci,
-        "MacroSaldo": macro_saldo,
-        "MacroFCI": macro_fci,
-        "CredicoopSaldo": credicoop_saldo,
-        "CredicoopFCI": credicoop_fci,
-        "SantanderSaldo": santander_saldo,
-        "SantanderFCI": santander_fci,
-        "pf_galicia": pf_galicia,
-        "pf_macro": pf_macro,
-        "pf_credicoop": pf_credicoop,
-        "pf_santander": pf_santander,
-        "otros_bancos": otros_bancos,
-        "pf_otros": pf_otros,
-        "total_bancos": total_bancos,
-        "total_pf": total_pf,
-        "detalle_pf": detalle_pf
-    }
-
-def calcular_quilmes_empresa(empresa, fecha_consulta, quilmes):
-    if quilmes.empty:
-        return {"deuda": 0, "nc": 0, "cobertura": 0, "necesidad": 0}
-
-    datos = quilmes[
-        (quilmes["Empresa"] == empresa) &
-        (quilmes["Fecha"] <= fecha_consulta)
-    ].copy()
-
-    if datos.empty:
-        return {"deuda": 0, "nc": 0, "cobertura": 0, "necesidad": 0}
-
-    datos = datos.sort_values("Fecha", ascending=False)
-    ultimo = datos.iloc[0]
-
-    deuda = float(ultimo["DeudaPagar"])
-    nc = float(ultimo["PromesaNC"])
-    cobertura = (
-        float(ultimo["PromesaNC"]) +
-        float(ultimo["ChequesEmitidos"]) +
-        float(ultimo["Depositos"]) +
-        float(ultimo["Efectivo"])
-    )
-    necesidad = float(ultimo["NecesidadQuilmes"])
-
-    return {"deuda": deuda, "nc": nc, "cobertura": cobertura, "necesidad": necesidad}
-
 # ============================================
-# CARGA DE DATOS
+# CARGA DE DATOS (Para calcular Patrimonio y Quilmes)
 # ============================================
 
 caja = leer_hoja("CierreCaja")
@@ -316,255 +143,194 @@ bancos_df = leer_hoja("Bancos")
 plazos_fijos_df = leer_hoja("PlazosFijos")
 quilmes = leer_hoja("Quilmes")
 
-# ============================================
-# VALIDACIÓN DE DATAFRAMES VACÍOS
-# ============================================
-
 if caja.empty:
     caja = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Efectivo", "Cheques", "Echeq"])
-
 if bancos_df.empty:
-    bancos_df = pd.DataFrame(columns=[
-        "ID", "Fecha", "Empresa", "GaliciaSaldo", "GaliciaFCI",
-        "MacroSaldo", "MacroFCI", "CredicoopSaldo", "CredicoopFCI",
-        "SantanderSaldo", "SantanderFCI"
-    ])
-
+    bancos_df = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "GaliciaSaldo", "GaliciaFCI", "MacroSaldo", "MacroFCI", "CredicoopSaldo", "CredicoopFCI", "SantanderSaldo", "SantanderFCI"])
 if plazos_fijos_df.empty:
     plazos_fijos_df = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Banco", "Capital", "Tasa", "Vencimiento"])
-
 if quilmes.empty:
-    quilmes = pd.DataFrame(columns=[
-        "ID", "Fecha", "Empresa", "DeudaPagar", "PromesaNC",
-        "ChequesEmitidos", "Depositos", "Efectivo", "NecesidadQuilmes"
-    ])
+    quilmes = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "DeudaPagar", "PromesaNC", "ChequesEmitidos", "Depositos", "Efectivo", "NecesidadQuilmes"])
 
-# ============================================
-# VALIDACIONES
-# ============================================
-
-if caja.empty:
-    st.warning("No existe ningún Cierre de Caja cargado.")
-
-# ============================================
-# FECHAS
-# ============================================
-
-caja["Fecha"] = pd.to_datetime(caja["Fecha"]).dt.date
-
-if not bancos_df.empty:
-    bancos_df["Fecha"] = pd.to_datetime(bancos_df["Fecha"]).dt.date
-
-if not quilmes.empty:
-    quilmes["Fecha"] = pd.to_datetime(quilmes["Fecha"]).dt.date
-
-# ============================================
-# EMPRESAS
-# ============================================
+# Limpieza de fechas
+caja["Fecha"] = pd.to_datetime(caja["Fecha"], errors='coerce').dt.date
+if not bancos_df.empty: bancos_df["Fecha"] = pd.to_datetime(bancos_df["Fecha"], errors='coerce').dt.date
+if not quilmes.empty: quilmes["Fecha"] = pd.to_datetime(quilmes["Fecha"], errors='coerce').dt.date
 
 empresas = ["Venier", "Venbiere", "CV Trade"]
-if "Venier" in empresas:
-    empresas.remove("Venier")
-    empresas.insert(0, "Venier")
 
 # ============================================
-# RESUMEN GENERAL
+# CÁLCULOS BASE
 # ============================================
 
-total_caja = 0
-total_bancos = 0
-total_pf = 0
-total_necesidad = 0
+totales_empresa = {}
 
-# --- MODIFICACIÓN: Guardamos los totales por empresa para el desglose ---
-totales_por_empresa = {}
+for emp in empresas:
+    # Caja
+    caja_emp = caja[(caja["Empresa"] == emp) & (caja["Fecha"] <= fecha_consulta)].sort_values("Fecha", ascending=False)
+    total_caja = 0
+    if not caja_emp.empty:
+        total_caja = float(caja_emp.iloc[0]["Efectivo"]) + float(caja_emp.iloc[0]["Cheques"]) + float(caja_emp.iloc[0]["Echeq"])
 
-for empresa in empresas:
-    saldos = calcular_saldos_empresa(empresa, fecha_consulta, caja)
-    bancos_empresa = calcular_bancos_empresa(empresa, fecha_consulta, bancos_df, plazos_fijos_df)
-    quilmes_empresa = calcular_quilmes_empresa(empresa, fecha_consulta, quilmes)
+    # Bancos
+    bancos_emp = bancos_df[(bancos_df["Empresa"] == emp) & (bancos_df["Fecha"] <= fecha_consulta)].sort_values("Fecha", ascending=False)
+    total_bancos = 0
+    if not bancos_emp.empty:
+        u = bancos_emp.iloc[0]
+        total_bancos = sum(float(u.get(col, 0)) for col in u.index if col.endswith("Saldo") or col.endswith("FCI") and not pd.isna(u.get(col, 0)))
 
-    total_caja += saldos["total"]
-    total_bancos += bancos_empresa["total_bancos"]
-    total_pf += bancos_empresa["total_pf"]
-    total_necesidad += quilmes_empresa["necesidad"]
+    # Plazos Fijos
+    pf_emp = plazos_fijos_df[plazos_fijos_df["Empresa"] == emp]
+    total_pf = pf_emp["Capital"].apply(limpiar_numero).sum() if not pf_emp.empty else 0
 
-    totales_por_empresa[empresa] = {
-        "caja": saldos["total"],
-        "bancos": bancos_empresa["total_bancos"],
-        "pf": bancos_empresa["total_pf"],
-        "patrimonio": saldos["total"] + bancos_empresa["total_bancos"] + bancos_empresa["total_pf"],
-        "quilmes": quilmes_empresa["necesidad"]
+    # Patrimonio
+    patrimonio = total_caja + total_bancos + total_pf
+
+    # Quilmes
+    quilmes_emp = quilmes[(quilmes["Empresa"] == emp) & (quilmes["Fecha"] <= fecha_consulta)].sort_values("Fecha", ascending=False)
+    nec_quilmes = 0
+    if not quilmes_emp.empty:
+        nec_quilmes = float(quilmes_emp.iloc[0].get("NecesidadQuilmes", 0))
+
+    totales_empresa[emp] = {
+        "caja": total_caja,
+        "bancos": total_bancos,
+        "pf": total_pf,
+        "patrimonio": patrimonio,
+        "quilmes": nec_quilmes
     }
 
-patrimonio_total = total_caja + total_bancos + total_pf
-
-st.subheader("📊 Resumen Total Empresas")
-
-kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
-
-def mostrar_desglose(columna, clave):
-    with columna:
-        for emp in empresas:
-            st.markdown(
-                f"<div style='font-size: 0.95rem; color: #777777; line-height: 1.4; margin-bottom: -5px;'>{emp}: {formato_moneda(totales_por_empresa[emp][clave])}</div>", 
-                unsafe_allow_html=True
-            )
-
-with kpi1:
-    st.metric("💵 Caja Total", formato_moneda(total_caja))
-    mostrar_desglose(kpi1, 'caja')
-
-with kpi2:
-    st.metric("🏦 Bancos", formato_moneda(total_bancos))
-    mostrar_desglose(kpi2, 'bancos')
-
-with kpi3:
-    st.metric("📈 Plazos Fijos", formato_moneda(total_pf))
-    mostrar_desglose(kpi3, 'pf')
-
-with kpi4:
-    st.metric("💎 Patrimonio", formato_moneda(patrimonio_total))
-    mostrar_desglose(kpi4, 'patrimonio')
-
-with kpi5:
-    st.metric("🍺 Necesidad Quilmes", formato_moneda(total_necesidad))
-    mostrar_desglose(kpi5, 'quilmes')
-
 # ============================================
-# RESULTADOS POR EMPRESA (TABS)
+# CARGA DE NECESIDADES MANUALES
 # ============================================
 
-st.markdown("""
-<style>
-.stTabs [data-baseweb="tab-list"]{
-    gap:10px;
+df_necesidades = leer_hoja("Necesidades_Manuales")
+if df_necesidades.empty:
+    df_necesidades = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Concepto", "Importe"])
+
+# Diccionario para acceder rápido a los valores manuales
+valores_manuales = {emp: {concepto: 0.0 for concepto in ["F931", "F2051 IVA", "Sueldos", "Consignaciones"]} for emp in empresas}
+
+for _, row in df_necesidades.iterrows():
+    emp = row["Empresa"]
+    concepto = row["Concepto"]
+    if emp in valores_manuales and concepto in valores_manuales[emp]:
+        valores_manuales[emp][concepto] = limpiar_numero(row["Importe"])
+
+# ============================================
+# CONSTRUCCIÓN DE LA TABLA (DATA EDITOR)
+# ============================================
+
+st.subheader("Detalle de Necesidades y Cobertura")
+
+# Armamos la estructura de datos para la tabla
+data = {
+    "Concepto": ["CAJA TOTAL", "BANCOS", "PLAZOS FIJOS", "PATRIMONIO", "NECESIDAD QUILMES", "F931", "F2051 IVA", "SUELDOS", "CONSIGNACIONES"]
 }
-.stTabs [data-baseweb="tab"]{
-    height:52px;
-    padding-left:25px;
-    padding-right:25px;
-    border-radius:12px 12px 0 0;
-    background:#F5F6F8;
-    border:1px solid #D9D9D9;
-    font-weight:600;
+
+for emp in empresas:
+    data[emp] = [
+        totales_empresa[emp]["caja"],
+        totales_empresa[emp]["bancos"],
+        totales_emp[emp]["pf"],
+        totales_emp[emp]["patrimonio"],
+        totales_emp[emp]["quilmes"],
+        valores_manuales[emp]["F931"],
+        valores_manuales[emp]["F2051 IVA"],
+        valores_manuales[emp]["Sueldos"],
+        valores_manuales[emp]["Consignaciones"]
+    ]
+
+df_tabla = pd.DataFrame(data)
+
+# Definimos qué columnas y celdas se pueden editar
+column_config = {
+    "Concepto": st.column_config.TextColumn("Concepto", disabled=True),
+    "Venier": st.column_config.NumberColumn("VENIER", format="$ %.0f"),
+    "Venbiere": st.column_config.NumberColumn("VENBIERE", format="$ %.0f"),
+    "CV Trade": st.column_config.NumberColumn("CV TRADE", format="$ %.0f"),
 }
-.stTabs [aria-selected="true"]{
-    background:#D32F2F !important;
-    color:white !important;
-    border:none;
-}
-</style>
-""", unsafe_allow_html=True)
 
-tabs = st.tabs(["🏢 Venier", "🍺 Venbiere", "📦 CV Trade"])
+# Mostramos el editor. 
+# Nota: Streamlit no permite bloquear celdas individuales, solo columnas enteras.
+# Para que el usuario sepa qué editar, pintamos el fondo o dejamos que edite lo que quiera.
+df_editado = st.data_editor(
+    df_tabla,
+    column_config=column_config,
+    use_container_width=True,
+    hide_index=True,
+    num_rows="fixed"
+)
 
-for tab, empresa in zip(tabs, empresas):
-    with tab:
-        saldos = calcular_saldos_empresa(empresa, fecha_consulta, caja)
-        bancos_empresa = calcular_bancos_empresa(empresa, fecha_consulta, bancos_df, plazos_fijos_df)
-        quilmes_empresa = calcular_quilmes_empresa(empresa, fecha_consulta, quilmes)
+# ============================================
+# BOTÓN GUARDAR MANUALES
+# ============================================
 
-        with st.container(border=True):
-            st.subheader(f"🏢 {empresa.upper()}")
-
-            if saldos["fecha_caja"] is not None:
-                st.caption(f"Cierre de Caja utilizado: {saldos['fecha_caja'].strftime('%d/%m/%Y')}")
-
-            col1, col2, col3, col4 = st.columns(4)
-
-            with col1:
-                st.metric("💵 Efectivo", formato_moneda(saldos["efectivo"]))
-            with col2:
-                st.metric("📄 Cheques", formato_moneda(saldos["cheques"]))
-            with col3:
-                st.metric("🏦 Echeq", formato_moneda(saldos["echeq"]))
-            with col4:
-                st.metric("💰 Total", formato_moneda(saldos["total"]))
-
-            st.divider()
-
-            mostrar_tarjeta_bancos(empresa, bancos_empresa)
-            mostrar_tarjeta_pf(bancos_empresa["detalle_pf"])
-
-            # ============================================
-            # RESUMEN DE CRÉDITOS - CUOTAS DEL MES
-            # ============================================
-            
-            st.divider()
-            st.subheader("📊 Resumen de Créditos - Cuotas del Mes")
-            
-            df_creditos_all = leer_hoja("Creditos")
-            df_amort_all = leer_hoja("Amortizacion")
-            
-            if not df_creditos_all.empty and not df_amort_all.empty:
-                mes_seleccionado = fecha_consulta.strftime("%Y-%m")
-                cuotas_mes = []
-                
-                for _, credito in df_creditos_all.iterrows():
-                    if credito["Empresa"] == empresa:
-                        df_amort_cred = df_amort_all[df_amort_all["ID Credito"] == credito["ID"]]
-                        if not df_amort_cred.empty:
-                            for _, cuota in df_amort_cred.iterrows():
-                                fecha_cuota = pd.to_datetime(cuota["Fecha"]).strftime("%Y-%m")
-                                if fecha_cuota == mes_seleccionado:
-                                    esta_pagada = cuota.get("Pagada", "NO") == "SI"
-                                    cuotas_mes.append({
-                                        "Banco": credito["Banco"],
-                                        "Fecha": cuota["Fecha"],
-                                        "Monto": limpiar_numero_local(cuota["Cuota"]),
-                                        "Pagada": "✅ Pagada" if esta_pagada else "⏳ Pendiente"
-                                    })
-                
-                if cuotas_mes:
-                    df_cuotas = pd.DataFrame(cuotas_mes)
-                    total_mes = df_cuotas["Monto"].sum()
-                    pagadas = df_cuotas[df_cuotas["Pagada"] == "✅ Pagada"]
-                    pendientes = df_cuotas[df_cuotas["Pagada"] == "⏳ Pendiente"]
+col_btn, _ = st.columns([1, 4])
+with col_btn:
+    if st.button("💾 Guardar Cambios Manuales", type="primary", use_container_width=True):
+        # Identificamos qué filas son editables
+        conceptos_editables = ["F931", "F2051 IVA", "SUELDOS", "CONSIGNACIONES"]
+        
+        # Validamos si hubo cambios reales
+        cambios_guardados = 0
+        
+        for i, row in df_editado.iterrows():
+            if row["Concepto"] in conceptos_editables:
+                for emp in empresas:
+                    nuevo_valor = row[emp]
+                    valor_viejo = valores_manuales[emp].get(row["Concepto"].title(), 0) # .title() porque en dict es "Sueldos"
                     
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("💰 Total Cuotas Mes", formato_moneda(total_mes))
-                    with col2:
-                        st.metric("✅ Pagadas", len(pagadas))
-                    with col3:
-                        st.metric("⏳ Pendientes", len(pendientes))
-                    
-                    st.dataframe(
-                        df_cuotas[["Fecha", "Banco", "Monto", "Pagada"]],
-                        use_container_width=True,
-                        hide_index=True,
-                        column_config={
-                            "Fecha": "Fecha",
-                            "Banco": "Banco",
-                            "Monto": st.column_config.NumberColumn("Monto", format="$ %.0f"),
-                            "Pagada": "Estado"
-                        }
-                    )
-                else:
-                    st.info(f"📭 No hay cuotas para el mes de {fecha_consulta.strftime('%B %Y')} para {empresa}")
-            else:
-                st.info("📭 No hay créditos o cuotas registradas aún.")
+                    # Si el usuario cambió el número, lo guardamos
+                    if nuevo_valor != valor_viejo:
+                        # Mapeamos el nombre del concepto para que coincida exacto con el dict
+                        concepto_guardar = "Sueldos" if row["Concepto"] == "SUELDOS" else ("F931" if row["Concepto"] == "F931" else row["Concepto"].title())
+                        guardar_necesidad_manual(emp, concepto_guardar, nuevo_valor)
+                        cambios_guardados += 1
+                        
+        if cambios_guardados > 0:
+            st.success("✅ Cambios guardados correctamente en Google Sheets.")
+            st.rerun() # Recargamos para actualizar los cálculos
+        else:
+            st.info("No se detectaron cambios para guardar.")
 
-        # ============================================
-        # QUILMES
-        # ============================================
+st.divider()
 
-        with st.container(border=True):
-            st.markdown("### 🍺 Quilmes")
+# ============================================
+# SECCIÓN DE NECESIDAD TOTAL Y COBERTURA
+# ============================================
+
+st.subheader("Resumen de Cobertura")
+
+for emp in empresas:
+    # Cálculo de la necesidad total sumando manuales
+    nec_manuales = sum(valores_manuales[emp].values())
+    nec_total = totales_empresa[emp]["quilmes"] + nec_manuales
+    patrimonio = totales_empresa[emp]["patrimonio"]
+    
+    # Cobertura
+    cobertura = patrimonio - nec_total
+    
+    with st.container(border=True):
+        st.markdown(f"#### 🏢 {emp.upper()}")
+        
+        c1, c2, c3 = st.columns(3)
+        
+        with c1:
+            st.metric("Patrimonio", formato_moneda(patrimonio))
+        with c2:
+            st.metric("Necesidad Total", formato_moneda(nec_total))
+        with c3:
+            st.metric("Cobertura", formato_moneda(cobertura))
             
-            col1, col2, col3, col4 = st.columns(4)
-
-            with col1:
-                st.metric("Deuda", formato_moneda(quilmes_empresa["deuda"]))
-            with col2:
-                st.metric("Promesa NC", formato_moneda(quilmes_empresa["nc"]))
-            with col3:
-                st.metric("Cobertura", formato_moneda(quilmes_empresa["cobertura"]))
-            with col4:
-                st.metric("Necesidad", formato_moneda(quilmes_empresa["necesidad"]))
-
-            if quilmes_empresa["necesidad"] > 0:
-                st.error(f"🔴 Necesidad Quilmes: {formato_moneda(quilmes_empresa['necesidad'])}")
-            else:
-                st.success(f"🟢 Cubierto por {formato_moneda(abs(quilmes_empresa['necesidad']))}")
+        # Lógica del Semáforo y Barra de Progreso
+        if cobertura >= 0:
+            st.success(f"🟢 **CUBIERTO.** El patrimonio cubre la necesidad total por {formato_moneda(abs(cobertura))}.")
+            # Si está cubierto, la barra es 100%
+            st.progress(1.0, text="Cobertura 100%")
+        else:
+            st.error(f"🔴 **DÉFICIT.** Faltan {formato_moneda(abs(cobertura))} para cubrir la necesidad.")
+            # Calculamos el porcentaje de cobertura
+            porcentaje = patrimonio / nec_total if nec_total > 0 else 1.0
+            porcentaje = max(0.0, min(1.0, porcentaje)) # Limitamos entre 0 y 1
+            st.progress(porcentaje, text=f"Cobertura {porcentaje * 100:.1f}%")
