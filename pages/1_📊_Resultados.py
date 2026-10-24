@@ -58,8 +58,20 @@ with st.sidebar:
     st.caption("By Pato Frangi")
 
 # ============================================
-# ENCABEZADO Y FECHA
+# ENCABEZADO Y ESTILOS GLOBALES
 # ============================================
+
+# ✅ CSS para achicar los números de los KPIs y que entren bien
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] {
+        font-size: 1.3rem !important; /* Achicamos un poquito la letra */
+    }
+    .fila-concepto { font-weight: 600; font-size: 1.1rem; padding-top: 10px; color: #333; }
+    .valor-fijo { font-size: 1.2rem; color: #555; margin-bottom: 10px;}
+    .titulo-empresa { text-align: center; font-weight: 800; font-size: 1.2rem; color: #2e7d32; background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;}
+</style>
+""", unsafe_allow_html=True)
 
 col1, col2 = st.columns([3,1])
 with col1:
@@ -142,12 +154,21 @@ for emp in empresas:
 df_necesidades = leer_hoja("Necesidades_Manuales")
 if df_necesidades.empty: df_necesidades = pd.DataFrame(columns=["ID", "Fecha", "Empresa", "Concepto", "Importe"])
 
-valores_manuales = {emp: {c: 0.0 for c in ["F931", "F2051 IVA", "Sueldos", "Consignaciones"]} for emp in empresas}
+# Inicializamos los valores incluyendo "Otros"
+valores_manuales = {emp: {c: 0.0 for c in ["F931", "F2051 IVA", "Sueldos", "Consignaciones", "Otros"]} for emp in empresas}
+comentarios_otros = {emp: "" for emp in empresas}
+
 for _, row in df_necesidades.iterrows():
     emp = row.get("Empresa")
-    concepto = row.get("Concepto")
-    if emp in valores_manuales and concepto in valores_manuales[emp]:
-        valores_manuales[emp][concepto] = limpiar_numero(row.get("Importe", 0))
+    concepto = str(row.get("Concepto", ""))
+    
+    if emp in valores_manuales:
+        if concepto in valores_manuales[emp]:
+            valores_manuales[emp][concepto] = limpiar_numero(row.get("Importe", 0))
+        elif concepto.startswith("Otros - "):
+            # Si empieza con "Otros - ", extraemos el importe y el comentario
+            valores_manuales[emp]["Otros"] = limpiar_numero(row.get("Importe", 0))
+            comentarios_otros[emp] = concepto.replace("Otros - ", "")
 
 # ============================================
 # 1. RESUMEN TOTAL (KPIs arriba)
@@ -158,7 +179,6 @@ tot_bancos_global = sum(totales_empresa[e]["bancos"] for e in empresas)
 tot_pf_global = sum(totales_empresa[e]["pf"] for e in empresas)
 tot_patrimonio_global = sum(totales_empresa[e]["patrimonio"] for e in empresas)
 
-# Para la necesidad global, sumamos Quilmes + Manuales de todas las empresas
 nec_quilmes_global = sum(totales_empresa[e]["quilmes"] for e in empresas)
 nec_manuales_global = sum(sum(valores_manuales[e].values()) for e in empresas)
 tot_necesidad_global = nec_quilmes_global + nec_manuales_global
@@ -180,28 +200,17 @@ with kpi5:
 st.divider()
 
 # ============================================
-# 2. DETALLE VISUAL (No tabla)
+# 2. DETALLE VISUAL
 # ============================================
 
 st.markdown("### 📋 Detalle por Empresa")
 
-# Estilos para que quede como una grilla elegante
-st.markdown("""
-<style>
-    .fila-concepto { font-weight: 600; font-size: 1.1rem; padding-top: 10px; color: #333; }
-    .valor-fijo { font-size: 1.2rem; color: #555; margin-bottom: 10px;}
-    .titulo-empresa { text-align: center; font-weight: 800; font-size: 1.2rem; color: #2e7d32; background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;}
-</style>
-""", unsafe_allow_html=True)
-
-# Encabezados de las columnas
 c_emp, c_ven, c_vb, c_cv = st.columns([1.5, 1, 1, 1])
 
 with c_ven: st.markdown("<div class='titulo-empresa'>VENIER</div>", unsafe_allow_html=True)
 with c_vb: st.markdown("<div class='titulo-empresa'>VENBIERE</div>", unsafe_allow_html=True)
 with c_cv: st.markdown("<div class='titulo-empresa'>CV TRADE</div>", unsafe_allow_html=True)
 
-# Función para dibujar una fila fija
 def render_fila_fija(titulo, clave_dict):
     c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1])
     with c1: st.markdown(f"<div class='fila-concepto'>{titulo}</div>", unsafe_allow_html=True)
@@ -213,30 +222,51 @@ render_fila_fija("💵 CAJA TOTAL", "caja")
 render_fila_fija("🏦 BANCOS", "bancos")
 render_fila_fija("📈 PLAZOS FIJOS", "pf")
 render_fila_fija("💎 PATRIMONIO", "patrimonio")
-render_fila_fija("🍺 NECESIDAD QUILMES", "quilmes")
+
+# ✅ ACÁ CAMBIAMOS A NECESIDAD TOTAL
+c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1])
+with c1: st.markdown(f"<div class='fila-concepto'>🚨 NECESIDAD TOTAL</div>", unsafe_allow_html=True)
+for col, emp in zip([c2, c3, c4], empresas):
+    nec_manuales = sum(valores_manuales[emp].values())
+    nec_total = totales_empresa[emp]["quilmes"] + nec_manuales
+    with col: st.markdown(f"<div class='valor-fijo' style='color: #d32f2f; font-weight: bold;'>{formato_moneda(nec_total)}</div>", unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("#### ✍️ Conceptos Editables")
 
-# Diccionario temporal para guardar los inputs del usuario
 inputs_actuales = {emp: {} for emp in empresas}
+inputs_comentarios = {emp: "" for emp in empresas}
 
-# Función para dibujar una fila editable
 def render_fila_editable(titulo, clave_concepto):
     c1, c2, c3, c4 = st.columns([1.5, 1, 1, 1])
     with c1: 
         st.markdown(f"<div class='fila-concepto' style='padding-top:20px;'>{titulo}</div>", unsafe_allow_html=True)
-    with c2:
-        inputs_actuales['Venier'][clave_concepto] = st.number_input(f"Edit {titulo} Venier", value=float(valores_manuales['Venier'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_Venier")
-    with c3:
-        inputs_actuales['Venbiere'][clave_concepto] = st.number_input(f"Edit {titulo} Venbiere", value=float(valores_manuales['Venbiere'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_Venbiere")
-    with c4:
-        inputs_actuales['CV Trade'][clave_concepto] = st.number_input(f"Edit {titulo} CV Trade", value=float(valores_manuales['CV Trade'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_CV Trade")
+    
+    # Si es "Otros", mostramos el input de texto para el comentario
+    if clave_concepto == "Otros":
+        with c2:
+            inputs_actuales['Venier']['Otros'] = st.number_input("Edit Otros Venier", value=float(valores_manuales['Venier']['Otros']), step=1000.0, format="%0.0f", label_visibility="collapsed", key="in_Otros_Venier")
+            inputs_comentarios['Venier'] = st.text_input("Comentario Venier", value=comentarios_otros['Venier'], placeholder="Detalle...", label_visibility="collapsed", key="txt_Otros_Venier")
+        with c3:
+            inputs_actuales['Venbiere']['Otros'] = st.number_input("Edit Otros Venbiere", value=float(valores_manuales['Venbiere']['Otros']), step=1000.0, format="%0.0f", label_visibility="collapsed", key="in_Otros_Venbiere")
+            inputs_comentarios['Venbiere'] = st.text_input("Comentario Venbiere", value=comentarios_otros['Venbiere'], placeholder="Detalle...", label_visibility="collapsed", key="txt_Otros_Venbiere")
+        with c4:
+            inputs_actuales['CV Trade']['Otros'] = st.number_input("Edit Otros CV Trade", value=float(valores_manuales['CV Trade']['Otros']), step=1000.0, format="%0.0f", label_visibility="collapsed", key="in_Otros_CV Trade")
+            inputs_comentarios['CV Trade'] = st.text_input("Comentario CV Trade", value=comentarios_otros['CV Trade'], placeholder="Detalle...", label_visibility="collapsed", key="txt_Otros_CV Trade")
+    else:
+        with c2:
+            inputs_actuales['Venier'][clave_concepto] = st.number_input(f"Edit {titulo} Venier", value=float(valores_manuales['Venier'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_Venier")
+        with c3:
+            inputs_actuales['Venbiere'][clave_concepto] = st.number_input(f"Edit {titulo} Venbiere", value=float(valores_manuales['Venbiere'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_Venbiere")
+        with c4:
+            inputs_actuales['CV Trade'][clave_concepto] = st.number_input(f"Edit {titulo} CV Trade", value=float(valores_manuales['CV Trade'][clave_concepto]), step=1000.0, format="%0.0f", label_visibility="collapsed", key=f"in_{clave_concepto}_CV Trade")
 
 render_fila_editable("📄 F931", "F931")
 render_fila_editable("🧾 F2051 IVA", "F2051 IVA")
 render_fila_editable("💼 SUELDOS", "Sueldos")
 render_fila_editable("📦 CONSIGNACIONES", "Consignaciones")
+# ✅ ACÁ AGREGAMOS EL CAMPO OTROS
+render_fila_editable("📝 OTROS", "Otros")
 
 # Botón de guardar
 col_btn, _ = st.columns([1, 4])
@@ -250,6 +280,17 @@ with col_btn:
                 if nuevo != viejo:
                     guardar_necesidad_manual(emp, concepto, nuevo)
                     cambios += 1
+            
+            # Guardar "Otros" con el formato "Otros - Comentario"
+            nuevo_otros = inputs_actuales[emp]["Otros"]
+            viejo_otros = valores_manuales[emp]["Otros"]
+            comentario = inputs_comentarios[emp].strip()
+            
+            if nuevo_otros != viejo_otros or comentario != comentarios_otros[emp]:
+                concepto_guardar = f"Otros - {comentario}" if comentario else "Otros"
+                guardar_necesidad_manual(emp, concepto_guardar, nuevo_otros)
+                cambios += 1
+                
         if cambios > 0:
             st.success("✅ Guardado en Google Sheets.")
             st.rerun()
@@ -259,12 +300,11 @@ with col_btn:
 st.divider()
 
 # ============================================
-# 3. COBERTURA (Semáforos y Barras)
+# 3. COBERTURA
 # ============================================
 
 st.markdown("### 🚦 Resumen de Cobertura")
 
-# Hacemos tres columnas para poner una empresa en cada una
 cob1, cob2, cob3 = st.columns(3)
 
 def mostrar_cobertura(col, emp):
@@ -276,7 +316,6 @@ def mostrar_cobertura(col, emp):
         
         st.markdown(f"#### {emp.upper()}")
         
-        # Semáforo
         if cobertura >= 0:
             st.success(f"🟢 **CUBIERTO** por {formato_moneda(abs(cobertura))}")
             st.progress(1.0, text="100% Cubierto")
