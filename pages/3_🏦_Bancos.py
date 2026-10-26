@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from utils.sheets import (
     obtener_hoja,
@@ -209,202 +209,221 @@ for tab, empresa in zip(tabs_bancos, empresas):
         
         st.subheader(f"📋 Historial Bancos - {empresa}")
         
+        # ✅ NUEVO: FILTRO DE FECHAS
+        col_f1, col_f2, _ = st.columns([1, 1, 2])
+        with col_f1:
+            fecha_desde = st.date_input("Desde", value=date.today() - timedelta(days=30), key=f"f_desde_{empresa}")
+        with col_f2:
+            fecha_hasta = st.date_input("Hasta", value=date.today(), key=f"f_hasta_{empresa}")
+            
+        st.write("") # Un pequeño espacio
+        
         df_bancos = pd.DataFrame(hoja_bancos.get_all_records())
         
         # Validar que el DataFrame no esté vacío y tenga la columna 'Empresa'
         if df_bancos.empty or 'Empresa' not in df_bancos.columns:
             st.info(f"📭 No hay registros bancarios para {empresa}")
         else:
-            df_bancos_emp = df_bancos[df_bancos["Empresa"] == empresa]
+            df_bancos_emp = df_bancos[df_bancos["Empresa"] == empresa].copy()
             
             if df_bancos_emp.empty:
                 st.info(f"📭 No hay registros bancarios para {empresa}")
             else:
-                df_bancos_emp = df_bancos_emp.sort_values("Fecha", ascending=False)
+                # ✅ NUEVO: Aplicamos el filtro de fechas
+                df_bancos_emp["Fecha_DT"] = pd.to_datetime(df_bancos_emp["Fecha"]).dt.date
+                df_bancos_filtrado = df_bancos_emp[
+                    (df_bancos_emp["Fecha_DT"] >= fecha_desde) & 
+                    (df_bancos_emp["Fecha_DT"] <= fecha_hasta)
+                ]
                 
-                for _, fila in df_bancos_emp.iterrows():
+                if df_bancos_filtrado.empty:
+                    st.info(f"📭 No hay registros en el rango de fechas seleccionado.")
+                else:
+                    df_bancos_filtrado = df_bancos_filtrado.sort_values("Fecha", ascending=False)
                     
-                    with st.container(border=True):
+                    for _, fila in df_bancos_filtrado.iterrows():
                         
-                        # ==========================
-                        # MODO VISUALIZACIÓN
-                        # ==========================
-                        
-                        if st.session_state.editando_banco != fila["ID"]:
+                        with st.container(border=True):
                             
-                            total_banco = (
-                                fila['GaliciaSaldo'] + fila['GaliciaFCI'] +
-                                fila['MacroSaldo'] + fila['MacroFCI'] +
-                                fila['CredicoopSaldo'] + fila['CredicoopFCI'] +
-                                fila['SantanderSaldo'] + fila['SantanderFCI'] +
-                                fila['BBVASaldo'] + fila['BBVAFCI']  # ✅ BBVA
-                            )
+                            # ==========================
+                            # MODO VISUALIZACIÓN
+                            # ==========================
                             
-                            col1, col2, col3, col4, col5, col6 = st.columns([1.5, 1.3, 1.3, 1.3, 1.3, 0.8])
-                            
-                            with col1:
-                                st.markdown(f"**📅 {fila['Fecha']}**")
-                                st.markdown(f"**🏦 Galicia**")
-                                st.markdown(f"Saldo: {formato_moneda(fila['GaliciaSaldo'])}")
-                                st.markdown(f"FCI: {formato_moneda(fila['GaliciaFCI'])}")
-                                st.markdown(f"Total: {formato_moneda(fila['GaliciaSaldo'] + fila['GaliciaFCI'])}")
-                            
-                            with col2:
-                                st.markdown(f"**🏦 Macro**")
-                                st.markdown(f"Saldo: {formato_moneda(fila['MacroSaldo'])}")
-                                st.markdown(f"FCI: {formato_moneda(fila['MacroFCI'])}")
-                                st.markdown(f"Total: {formato_moneda(fila['MacroSaldo'] + fila['MacroFCI'])}")
-                            
-                            with col3:
-                                st.markdown(f"**🏦 Credicoop**")
-                                st.markdown(f"Saldo: {formato_moneda(fila['CredicoopSaldo'])}")
-                                st.markdown(f"FCI: {formato_moneda(fila['CredicoopFCI'])}")
-                                st.markdown(f"Total: {formato_moneda(fila['CredicoopSaldo'] + fila['CredicoopFCI'])}")
-                            
-                            with col4:
-                                st.markdown(f"**🏦 Santander**")
-                                st.markdown(f"Saldo: {formato_moneda(fila['SantanderSaldo'])}")
-                                st.markdown(f"FCI: {formato_moneda(fila['SantanderFCI'])}")
-                                st.markdown(f"Total: {formato_moneda(fila['SantanderSaldo'] + fila['SantanderFCI'])}")
-                            
-                            with col5:
-                                # ✅ BBVA
-                                st.markdown(f"**🏦 BBVA**")
-                                st.markdown(f"Saldo: {formato_moneda(fila['BBVASaldo'])}")
-                                st.markdown(f"FCI: {formato_moneda(fila['BBVAFCI'])}")
-                                st.markdown(f"Total: {formato_moneda(fila['BBVASaldo'] + fila['BBVAFCI'])}")
-                                st.markdown(f"**💰 Total General: {formato_moneda(total_banco)}**")
-                            
-                            with col6:
-                                if st.button("✏️", key=f"edit_banco_{fila['ID']}", use_container_width=True):
-                                    st.session_state.editando_banco = fila["ID"]
-                                    st.rerun()
+                            if st.session_state.editando_banco != fila["ID"]:
                                 
-                                if st.session_state.eliminar_banco == fila["ID"]:
-                                    col_si, col_no = st.columns(2)
-                                    with col_si:
-                                        if st.button("✅", key=f"ok_banco_{fila['ID']}", use_container_width=True):
-                                            eliminar_banco(fila["ID"])
-                                            st.session_state.eliminar_banco = None
-                                            st.session_state["mensaje_bancos"] = f"✅ Registro bancario para {empresa} eliminado correctamente!"
-                                            st.rerun()
-                                    with col_no:
-                                        if st.button("❌", key=f"cancel_banco_{fila['ID']}", use_container_width=True):
-                                            st.session_state.eliminar_banco = None
-                                            st.rerun()
-                                else:
-                                    if st.button("🗑️", key=f"del_banco_{fila['ID']}", use_container_width=True):
-                                        st.session_state.eliminar_banco = fila["ID"]
-                                        st.rerun()
-                        
-                        # ==========================
-                        # MODO EDICIÓN
-                        # ==========================
-                        
-                        else:
-                            
-                            st.subheader(f"✏️ Editando ID: {fila['ID']}")
-                            
-                            with st.form(key=f"edit_banco_form_{fila['ID']}"):
-                                
-                                fecha_edit = st.date_input(
-                                    "Fecha",
-                                    value=pd.to_datetime(fila["Fecha"]).date(),
-                                    key=f"fecha_edit_{fila['ID']}"
+                                total_banco = (
+                                    fila['GaliciaSaldo'] + fila['GaliciaFCI'] +
+                                    fila['MacroSaldo'] + fila['MacroFCI'] +
+                                    fila['CredicoopSaldo'] + fila['CredicoopFCI'] +
+                                    fila['SantanderSaldo'] + fila['SantanderFCI'] +
+                                    fila['BBVASaldo'] + fila['BBVAFCI']  # ✅ BBVA
                                 )
                                 
-                                col1, col2 = st.columns(2)
+                                col1, col2, col3, col4, col5, col6 = st.columns([1.5, 1.3, 1.3, 1.3, 1.3, 0.8])
                                 
                                 with col1:
-                                    galicia_saldo_edit = st.number_input(
-                                        "Galicia Saldo",
-                                        value=float(fila["GaliciaSaldo"]),
-                                        step=1000.0,
-                                        key=f"gs_edit_{fila['ID']}"
-                                    )
-                                    macro_saldo_edit = st.number_input(
-                                        "Macro Saldo",
-                                        value=float(fila["MacroSaldo"]),
-                                        step=1000.0,
-                                        key=f"ms_edit_{fila['ID']}"
-                                    )
-                                    credicoop_saldo_edit = st.number_input(
-                                        "Credicoop Saldo",
-                                        value=float(fila["CredicoopSaldo"]),
-                                        step=1000.0,
-                                        key=f"cs_edit_{fila['ID']}"
-                                    )
-                                    santander_saldo_edit = st.number_input(
-                                        "Santander Saldo",
-                                        value=float(fila["SantanderSaldo"]),
-                                        step=1000.0,
-                                        key=f"ss_edit_{fila['ID']}"
-                                    )
-                                    # ✅ BBVA Saldo
-                                    bbva_saldo_edit = st.number_input(
-                                        "BBVA Saldo",
-                                        value=float(fila["BBVASaldo"]),
-                                        step=1000.0,
-                                        key=f"bs_edit_{fila['ID']}"
-                                    )
+                                    st.markdown(f"**📅 {fila['Fecha']}**")
+                                    st.markdown(f"**🏦 Galicia**")
+                                    st.markdown(f"Saldo: {formato_moneda(fila['GaliciaSaldo'])}")
+                                    st.markdown(f"FCI: {formato_moneda(fila['GaliciaFCI'])}")
+                                    st.markdown(f"Total: {formato_moneda(fila['GaliciaSaldo'] + fila['GaliciaFCI'])}")
                                 
                                 with col2:
-                                    galicia_fci_edit = st.number_input(
-                                        "Galicia FCI",
-                                        value=float(fila["GaliciaFCI"]),
-                                        step=1000.0,
-                                        key=f"gf_edit_{fila['ID']}"
-                                    )
-                                    macro_fci_edit = st.number_input(
-                                        "Macro FCI",
-                                        value=float(fila["MacroFCI"]),
-                                        step=1000.0,
-                                        key=f"mf_edit_{fila['ID']}"
-                                    )
-                                    credicoop_fci_edit = st.number_input(
-                                        "Credicoop FCI",
-                                        value=float(fila["CredicoopFCI"]),
-                                        step=1000.0,
-                                        key=f"cf_edit_{fila['ID']}"
-                                    )
-                                    santander_fci_edit = st.number_input(
-                                        "Santander FCI",
-                                        value=float(fila["SantanderFCI"]),
-                                        step=1000.0,
-                                        key=f"sf_edit_{fila['ID']}"
-                                    )
-                                    # ✅ BBVA FCI
-                                    bbva_fci_edit = st.number_input(
-                                        "BBVA FCI",
-                                        value=float(fila["BBVAFCI"]),
-                                        step=1000.0,
-                                        key=f"bf_edit_{fila['ID']}"
-                                    )
+                                    st.markdown(f"**🏦 Macro**")
+                                    st.markdown(f"Saldo: {formato_moneda(fila['MacroSaldo'])}")
+                                    st.markdown(f"FCI: {formato_moneda(fila['MacroFCI'])}")
+                                    st.markdown(f"Total: {formato_moneda(fila['MacroSaldo'] + fila['MacroFCI'])}")
                                 
-                                col_guardar, col_cancelar = st.columns(2)
+                                with col3:
+                                    st.markdown(f"**🏦 Credicoop**")
+                                    st.markdown(f"Saldo: {formato_moneda(fila['CredicoopSaldo'])}")
+                                    st.markdown(f"FCI: {formato_moneda(fila['CredicoopFCI'])}")
+                                    st.markdown(f"Total: {formato_moneda(fila['CredicoopSaldo'] + fila['CredicoopFCI'])}")
                                 
-                                with col_guardar:
-                                    if st.form_submit_button("💾 Guardar", use_container_width=True):
-                                        actualizar_banco(
-                                            fila["ID"],
-                                            fecha_edit.strftime("%Y-%m-%d"),
-                                            fila["Empresa"],
-                                            galicia_saldo_edit,
-                                            galicia_fci_edit,
-                                            macro_saldo_edit,
-                                            macro_fci_edit,
-                                            credicoop_saldo_edit,
-                                            credicoop_fci_edit,
-                                            santander_saldo_edit,
-                                            santander_fci_edit,
-                                            bbva_saldo_edit,
-                                            bbva_fci_edit
+                                with col4:
+                                    st.markdown(f"**🏦 Santander**")
+                                    st.markdown(f"Saldo: {formato_moneda(fila['SantanderSaldo'])}")
+                                    st.markdown(f"FCI: {formato_moneda(fila['SantanderFCI'])}")
+                                    st.markdown(f"Total: {formato_moneda(fila['SantanderSaldo'] + fila['SantanderFCI'])}")
+                                
+                                with col5:
+                                    # ✅ BBVA
+                                    st.markdown(f"**🏦 BBVA**")
+                                    st.markdown(f"Saldo: {formato_moneda(fila['BBVASaldo'])}")
+                                    st.markdown(f"FCI: {formato_moneda(fila['BBVAFCI'])}")
+                                    st.markdown(f"Total: {formato_moneda(fila['BBVASaldo'] + fila['BBVAFCI'])}")
+                                    st.markdown(f"**💰 Total General: {formato_moneda(total_banco)}**")
+                                
+                                with col6:
+                                    if st.button("✏️", key=f"edit_banco_{fila['ID']}", use_container_width=True):
+                                        st.session_state.editando_banco = fila["ID"]
+                                        st.rerun()
+                                    
+                                    if st.session_state.eliminar_banco == fila["ID"]:
+                                        col_si, col_no = st.columns(2)
+                                        with col_si:
+                                            if st.button("✅", key=f"ok_banco_{fila['ID']}", use_container_width=True):
+                                                eliminar_banco(fila["ID"])
+                                                st.session_state.eliminar_banco = None
+                                                st.session_state["mensaje_bancos"] = f"✅ Registro bancario para {empresa} eliminado correctamente!"
+                                                st.rerun()
+                                        with col_no:
+                                            if st.button("❌", key=f"cancel_banco_{fila['ID']}", use_container_width=True):
+                                                st.session_state.eliminar_banco = None
+                                                st.rerun()
+                                    else:
+                                        if st.button("🗑️", key=f"del_banco_{fila['ID']}", use_container_width=True):
+                                            st.session_state.eliminar_banco = fila["ID"]
+                                            st.rerun()
+                            
+                            # ==========================
+                            # MODO EDICIÓN
+                            # ==========================
+                            
+                            else:
+                                
+                                st.subheader(f"✏️ Editando ID: {fila['ID']}")
+                                
+                                with st.form(key=f"edit_banco_form_{fila['ID']}"):
+                                    
+                                    fecha_edit = st.date_input(
+                                        "Fecha",
+                                        value=pd.to_datetime(fila["Fecha"]).date(),
+                                        key=f"fecha_edit_{fila['ID']}"
+                                    )
+                                    
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        galicia_saldo_edit = st.number_input(
+                                            "Galicia Saldo",
+                                            value=float(fila["GaliciaSaldo"]),
+                                            step=1000.0,
+                                            key=f"gs_edit_{fila['ID']}"
                                         )
-                                        st.session_state.editando_banco = None
-                                        st.session_state["mensaje_bancos"] = f"✅ Registro bancario para {empresa} actualizado correctamente!"
-                                        st.rerun()
-                                
-                                with col_cancelar:
-                                    if st.form_submit_button("❌ Cancelar", use_container_width=True):
-                                        st.session_state.editando_banco = None
-                                        st.rerun()
+                                        macro_saldo_edit = st.number_input(
+                                            "Macro Saldo",
+                                            value=float(fila["MacroSaldo"]),
+                                            step=1000.0,
+                                            key=f"ms_edit_{fila['ID']}"
+                                        )
+                                        credicoop_saldo_edit = st.number_input(
+                                            "Credicoop Saldo",
+                                            value=float(fila["CredicoopSaldo"]),
+                                            step=1000.0,
+                                            key=f"cs_edit_{fila['ID']}"
+                                        )
+                                        santander_saldo_edit = st.number_input(
+                                            "Santander Saldo",
+                                            value=float(fila["SantanderSaldo"]),
+                                            step=1000.0,
+                                            key=f"ss_edit_{fila['ID']}"
+                                        )
+                                        # ✅ BBVA Saldo
+                                        bbva_saldo_edit = st.number_input(
+                                            "BBVA Saldo",
+                                            value=float(fila["BBVASaldo"]),
+                                            step=1000.0,
+                                            key=f"bs_edit_{fila['ID']}"
+                                        )
+                                    
+                                    with col2:
+                                        galicia_fci_edit = st.number_input(
+                                            "Galicia FCI",
+                                            value=float(fila["GaliciaFCI"]),
+                                            step=1000.0,
+                                            key=f"gf_edit_{fila['ID']}"
+                                        )
+                                        macro_fci_edit = st.number_input(
+                                            "Macro FCI",
+                                            value=float(fila["MacroFCI"]),
+                                            step=1000.0,
+                                            key=f"mf_edit_{fila['ID']}"
+                                        )
+                                        credicoop_fci_edit = st.number_input(
+                                            "Credicoop FCI",
+                                            value=float(fila["CredicoopFCI"]),
+                                            step=1000.0,
+                                            key=f"cf_edit_{fila['ID']}"
+                                        )
+                                        santander_fci_edit = st.number_input(
+                                            "Santander FCI",
+                                            value=float(fila["SantanderFCI"]),
+                                            step=1000.0,
+                                            key=f"sf_edit_{fila['ID']}"
+                                        )
+                                        # ✅ BBVA FCI
+                                        bbva_fci_edit = st.number_input(
+                                            "BBVA FCI",
+                                            value=float(fila["BBVAFCI"]),
+                                            step=1000.0,
+                                            key=f"bf_edit_{fila['ID']}"
+                                        )
+                                    
+                                    col_guardar, col_cancelar = st.columns(2)
+                                    
+                                    with col_guardar:
+                                        if st.form_submit_button("💾 Guardar", use_container_width=True):
+                                            actualizar_banco(
+                                                fila["ID"],
+                                                fecha_edit.strftime("%Y-%m-%d"),
+                                                fila["Empresa"],
+                                                galicia_saldo_edit,
+                                                galicia_fci_edit,
+                                                macro_saldo_edit,
+                                                macro_fci_edit,
+                                                credicoop_saldo_edit,
+                                                credicoop_fci_edit,
+                                                santander_saldo_edit,
+                                                santander_fci_edit,
+                                                bbva_saldo_edit,
+                                                bbva_fci_edit
+                                            )
+                                            st.session_state.editando_banco = None
+                                            st.session_state["mensaje_bancos"] = f"✅ Registro bancario para {empresa} actualizado correctamente!"
+                                            st.rerun()
+                                    
+                                    with col_cancelar:
+                                        if st.form_submit_button("❌ Cancelar", use_container_width=True):
+                                            st.session_state.editando_banco = None
+                                            st.rerun()
